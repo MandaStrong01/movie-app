@@ -339,4 +339,28 @@ export default function App() {
             </div>
             <h1 className="text-[14rem] font-black text-purple-600 uppercase italic leading-none mb-10 drop-shadow-[0_0_100px_rgba(138,43,226,0.7)] tracking-tighter underline underline-offset-8 decoration-purple-900/50 text-center leading-none">THAT'S ALL FOLKS!</h1>
             <div className="max-w-6xl space-y-16 mb-24 text-center">
-              <p className="text-5xl font-bold text-
+              <p className="text-5xl font-bold text-white uppercase tracking-tight leading-tight">
+                Thank you for exploring MandaStrong Studio - The All-In-One Make-A-Movie App!
+              </p>
+              <p className="text-3xl text-purple-400 italic">
+                Your cinematic journey starts here.
+              </p>
+            </div>
+            <div className="flex gap-8">
+              <button onClick={() => setPage(1)} className="bg-purple-600 px-20 py-8 rounded-[40px] text-3xl font-black uppercase text-white hover:scale-105 transition shadow-[0_0_60px_rgba(147,51,234,0.5)]">
+                Return Home
+              </button>
+            </div>
+          </div>
+        )}
+      </main>
+
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #000; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #7c3aed; border-radius: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #a855f7; }
+      `}</style>
+    </div>
+  );
+}
