@@ -1,472 +1,342 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  Menu, Sparkles, ChevronRight, ChevronLeft, Play, Upload, MessageCircle, 
-  Home, Settings, Database, Film, Music, Image as ImageIcon, Video, 
-  Palette, Layers, Zap, Clock, Download, Share2, Users, FileText,
-  Mic, Camera, Scissors, Sliders, Eye, Award, Shield,
-  Grid, Search, Plus, Save, FolderOpen, CheckCircle, Info, Bell, User, HelpCircle,
-  Youtube, Twitter, Instagram, Facebook, Send
+  Menu, Sparkles, ChevronRight, ChevronLeft, 
+  CheckCircle, Play, Upload, MessageCircle, 
+  Home, LogOut, Send, Mic, Video as VideoIcon, 
+  PenTool, Zap, Camera, Shield, Heart, Share2, Music,
+  Image as ImageIcon, Download, Settings, Sliders, Eye
 } from 'lucide-react';
 
-// ===============================================
-// MANDASTRONG STUDIO PROFESSIONAL
-// The World's First Complete AI Cinema Platform
-// ===============================================
+// --- PRODUCTION AI TOOLSET (600 TOTAL - 120 PER BOARD) ---
+const generateOrderedTools = (category) => {
+  const masterData = {
+    Writing: ["Neural Script Architect", "DeepPlot Narrative AI", "Dialogue Synthesis Engine", "Character Core Logic", "Three-Act Quantum Solver", "Arc Flow Optimizer", "DeepLore Neural Link", "Subtext Logic Synth", "Scene-Beat Optimizer", "Climatic Logic Pro", "Backstory Neural Weaver", "Protagonist Core Lab"],
+    Voice: ["Neural Vocal Clone Pro", "Atmospheric Timbre Synth", "Emotion-Depth Modulator", "Sonic Dialect Weaver", "DeepBreath Neural AI", "Vocal Clarity Engine", "Resonance Mapping Pro", "Linguistic Flow Lab", "Neural Accent Synthesis", "Studio Harmony Logic", "Whisper-Logic Pro", "Vocal Identity Synth"],
+    Image: ["Neural Asset Architect", "Quantum Texture Mapper", "VFX Plate Synthesis", "Matte Painting Logic", "Atmospheric Light Engine", "Skin-Shader Neural Lab", "Depth-Field Logic Pro", "Style Transfer Matrix", "Background Weaver AI", "Cinematic Grain Synth", "Reflection Logic Engine", "Particle Physics Synth"],
+    Video: ["Temporal Motion Synth", "Cinematic Camera Logic", "Neural Avatar rigger", "Dynamic Pan AI", "Crane Shot Simulator", "Dolly Zoom Neural Pro", "Tracking Shot Logic", "Frame Interpolation Pro", "Depth Motion Synth", "Action-Sequence Weaver", "Perspective Shift AI", "Dynamic Focus Lab"],
+    Motion: ["Skeleton Tracker Pro", "Neural Mocap Logic", "Fluid Physics Engine", "Cloth Dynamics AI", "Facial Logic Synthesis", "Joint Precision Engine", "Gravity Simulator Lab", "Collision Matrix Pro", "Soft-Body Neural Pro", "Muscle-Fiber Logic", "Impact Logic Mapper", "Auto-Rigger Neural V2"]
+  };
 
-// PROFESSIONAL PRODUCTION PIPELINE
-const PRODUCTION_PIPELINE = {
-  preProduction: {
-    name: "Pre-Production",
-    icon: FileText,
-    color: "blue",
-    modules: [
-      { id: "script", name: "AI Screenplay Development", icon: FileText, tools: 40 },
-      { id: "storyboard", name: "AI Storyboarding", icon: Grid, tools: 35 },
-      { id: "casting", name: "AI Character Design", icon: Users, tools: 30 }
-    ]
-  },
-  production: {
-    name: "Production",
-    icon: Camera,
-    color: "purple",
-    modules: [
-      { id: "video", name: "AI Video Generation", icon: Video, tools: 50 },
-      { id: "voice", name: "AI Voice Synthesis", icon: Mic, tools: 45 },
-      { id: "assets", name: "AI Asset Generation", icon: ImageIcon, tools: 60 }
-    ]
-  },
-  postProduction: {
-    name: "Post-Production",
-    icon: Scissors,
-    color: "pink",
-    modules: [
-      { id: "edit", name: "Professional Timeline", icon: Film },
-      { id: "color", name: "Color Grading Suite", icon: Palette },
-      { id: "audio", name: "Audio Mixing Console", icon: Music },
-      { id: "vfx", name: "VFX & Enhancement", icon: Sparkles, tools: 45 }
-    ]
-  },
-  delivery: {
-    name: "Delivery",
-    icon: Share2,
-    color: "green",
-    modules: [
-      { id: "export", name: "Professional Export", icon: Download },
-      { id: "distribute", name: "Distribution Hub", icon: Share2 }
-    ]
+  const list = [];
+  const source = masterData[category] || masterData["Writing"];
+  for (let i = 0; i < 120; i++) {
+    const base = source[i % source.length];
+    const version = i >= source.length ? ` PRO ${Math.floor(i / source.length)}` : "";
+    list.push(`${base}${version}`.toUpperCase());
   }
+  return list;
 };
 
-// AI TOOLS DATABASE (Generate 40-60 tools per module)
-const generateTools = (baseTools, count) => {
-  const result = [];
-  for (let i = 0; i < count; i++) {
-    const base = baseTools[i % baseTools.length];
-    const version = i >= baseTools.length ? ` Pro ${Math.floor(i / baseTools.length) + 1}` : "";
-    result.push(`${base}${version}`);
-  }
-  return result;
+const BOARD_DATA = {
+  Writing: generateOrderedTools("Writing"),
+  Voice: generateOrderedTools("Voice"),
+  Image: generateOrderedTools("Image"),
+  Video: generateOrderedTools("Video"),
+  Motion: generateOrderedTools("Motion")
 };
 
-const AI_TOOLS = {
-  script: generateTools([
-    "Neural Story Engine", "Three-Act AI", "Character Arc Builder", "Dialogue Generator",
-    "Scene Analyzer", "Plot Constructor", "Conflict Mapper", "Beat Sheet Creator"
-  ], 40),
-  storyboard: generateTools([
-    "Shot Composer", "Camera Angle AI", "Lighting Designer", "Visual Flow Mapper",
-    "Continuity Checker", "Frame Analyzer", "Composition Guide", "Coverage Planner"
-  ], 35),
-  casting: generateTools([
-    "Character Visualizer", "Age Modifier", "Expression Generator", "Costume Designer",
-    "Makeup Simulator", "Voice Profiler", "Body Type Matcher", "Casting Suggester"
-  ], 30),
-  video: generateTools([
-    "Text-to-Video Engine", "Scene Synthesizer", "Camera Movement AI", "Depth Creator",
-    "Motion Blur Engine", "Frame Interpolator", "Style Transfer", "Cinematic Grader"
-  ], 50),
-  voice: generateTools([
-    "Voice Clone Pro", "Emotion Modulator", "Accent Synthesizer", "Age Shifter",
-    "Dialogue Timer", "Lip-Sync Generator", "Vocal Designer", "Breath Controller"
-  ], 45),
-  assets: generateTools([
-    "Environment Generator", "Prop Creator", "Texture Synthesizer", "Lighting Sim",
-    "Matte Painting AI", "Set Extension", "Sky Replacer", "Weather Generator"
-  ], 60),
-  vfx: generateTools([
-    "Green Screen Keyer", "Motion Tracker", "3D Camera Solver", "Particle Sim",
-    "Explosion Generator", "Fire/Smoke Creator", "Water Simulator", "Destruction Engine"
-  ], 45)
-};
+// --- THE PROFESSIONAL SMART BUBBLE (BOTTOM RIGHT - LINKED TO PG 19) ---
+const HelpBubble = ({ onClick }) => (
+  <button 
+    onClick={onClick}
+    className="fixed bottom-8 right-8 z-[250] flex items-center justify-center w-16 h-16 bg-purple-600 rounded-full shadow-[0_0_50px_rgba(147,51,234,0.6)] transition-all border-2 border-white/40 hover:scale-110 active:scale-95 group"
+  >
+    <MessageCircle size={36} className="text-white" />
+    <div className="absolute top-0 right-0 w-4 h-4 bg-green-400 rounded-full border-2 border-purple-600 animate-pulse" />
+  </button>
+);
 
-export default function MandaStrongStudioPro() {
-  const [page, setPage] = useState('welcome');
-  const [currentStage, setCurrentStage] = useState(null);
-  const [currentModule, setCurrentModule] = useState(null);
-  const [duration, setDuration] = useState(90);
+export default function App() {
+  const [page, setPage] = useState(1);
   const [menuOpen, setMenuOpen] = useState(false);
+  
+  // OWNER OVERRIDE: Defaulted to 'Studio' plan ($50)
+  const [selectedPlan, setSelectedPlan] = useState('Studio');
+  
+  const [audioActive, setAudioActive] = useState(false);
   const videoRef = useRef(null);
+  const playPromiseRef = useRef(null);
 
+  useEffect(() => { setPage(1); window.scrollTo(0, 0); }, []);
+  useEffect(() => { window.scrollTo(0, 0); }, [page]);
+
+  // Master Video Engine - background.mp4 with Automatic Un-mute Logic
   useEffect(() => {
-    if (videoRef.current && page === 'welcome') {
-      videoRef.current.play().catch(() => {});
-    }
+    const video = videoRef.current;
+    if (!video) return;
+
+    const runPlay = async () => {
+      try {
+        if (playPromiseRef.current) await playPromiseRef.current;
+        playPromiseRef.current = video.play();
+        await playPromiseRef.current;
+      } catch (err) {}
+    };
+
+    if (page === 1 || page === 2 || page === 10 || page === 21) runPlay(); else video.pause();
+
+    const startAudio = () => {
+      if (video && (page === 1 || page === 2)) {
+        video.muted = false;
+        setAudioActive(true);
+        runPlay();
+      }
+    };
+
+    window.addEventListener('mousedown', startAudio);
+    window.addEventListener('touchstart', startAudio);
+    return () => {
+      window.removeEventListener('mousedown', startAudio);
+      window.removeEventListener('touchstart', startAudio);
+    };
   }, [page]);
 
-  return (
-    <div className="h-screen bg-black text-white flex flex-col overflow-hidden">
-      
-      {/* ========== HEADER ========== */}
-      {page !== 'welcome' && (
-        <header className="bg-zinc-900 border-b border-zinc-800 px-6 py-3 flex items-center justify-between z-50">
-          <div className="flex items-center gap-6">
-            <h1 className="text-2xl font-black text-purple-500">MANDASTRONG STUDIO PRO</h1>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <button className="hover:bg-zinc-800 p-2 rounded"><Bell size={20} /></button>
-            <button className="hover:bg-zinc-800 p-2 rounded"><HelpCircle size={20} /></button>
-            <button className="hover:bg-zinc-800 p-2 rounded"><Settings size={20} /></button>
-            <button className="hover:bg-zinc-800 p-2 rounded"><User size={20} /></button>
-            <button 
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="bg-purple-600 p-2 rounded"
-            >
-              <Menu size={20} />
-            </button>
-          </div>
+  const goTo = (p) => { setPage(p); setMenuOpen(false); };
 
-          {menuOpen && (
-            <div className="absolute top-16 right-6 bg-zinc-900 border border-zinc-700 rounded-xl p-4 w-64 shadow-2xl">
-              <button onClick={() => { setPage('dashboard'); setMenuOpen(false); }} className="w-full text-left px-4 py-2 hover:bg-purple-600 rounded font-bold">Dashboard</button>
-              <button onClick={() => { setPage('help'); setMenuOpen(false); }} className="w-full text-left px-4 py-2 hover:bg-purple-600 rounded font-bold">Help Center</button>
-              <button onClick={() => { setPage('welcome'); setMenuOpen(false); }} className="w-full text-left px-4 py-2 hover:bg-red-600 rounded font-bold mt-2">Sign Out</button>
-            </div>
-          )}
-        </header>
-      )}
-
-      {/* ========== MAIN CONTENT ========== */}
-      <main className="flex-1 overflow-hidden">
-
-        {/* WELCOME SCREEN */}
-        {page === 'welcome' && (
-          <div className="h-full relative">
-            <video ref={videoRef} autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover opacity-30">
-              <source src="background.mp4" type="video/mp4" />
-            </video>
-            
-            <div className="relative z-10 h-full flex flex-col justify-center items-center text-center px-8 bg-black/50">
-              <Sparkles size={120} className="text-purple-500 mb-12 animate-pulse" />
-              
-              <h1 className="text-8xl font-black text-white uppercase leading-none mb-8">
-                MandaStrong Studio Pro
-              </h1>
-              
-              <p className="text-2xl text-gray-300 max-w-4xl mb-12">
-                The world's first complete AI-powered cinema production suite. Create professional 
-                feature films up to 3 hours in length with AI tools for every stage of production.
-              </p>
-              
-              <div className="grid grid-cols-4 gap-6 mb-16 max-w-6xl">
-                {Object.values(PRODUCTION_PIPELINE).map((stage, i) => (
-                  <div key={i} className="bg-zinc-900/80 p-8 rounded-2xl border border-zinc-700 backdrop-blur">
-                    <stage.icon size={48} className="text-purple-500 mb-4 mx-auto" />
-                    <h3 className="text-xl font-black mb-2">{stage.name}</h3>
-                    <p className="text-sm text-gray-400">{stage.modules.length} Modules</p>
-                  </div>
-                ))}
-              </div>
-
-              <button 
-                onClick={() => setPage('dashboard')}
-                className="bg-purple-600 text-white px-16 py-6 rounded-2xl text-2xl font-black uppercase hover:scale-105 transition shadow-2xl"
-              >
-                Enter Studio
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* DASHBOARD */}
-        {page === 'dashboard' && (
-          <div className="h-full bg-zinc-950 overflow-y-auto p-8">
-            <div className="max-w-7xl mx-auto">
-              <h1 className="text-5xl font-black mb-2">Production Dashboard</h1>
-              <p className="text-gray-400 mb-8">Complete cinema production pipeline • Up to 3 hours per project</p>
-
-              {/* Production Stages */}
-              <div className="grid grid-cols-4 gap-6">
-                {Object.entries(PRODUCTION_PIPELINE).map(([key, stage]) => (
-                  <div 
-                    key={key}
-                    onClick={() => { setCurrentStage(key); setPage('stage'); }}
-                    className="bg-zinc-900 border-2 border-zinc-800 hover:border-purple-600 p-8 rounded-2xl cursor-pointer transition group"
-                  >
-                    <stage.icon size={56} className="text-purple-500 mb-4 group-hover:scale-110 transition" />
-                    <h3 className="text-2xl font-black mb-2">{stage.name}</h3>
-                    <p className="text-sm text-gray-400 mb-4">{stage.modules.length} Modules</p>
-                    <div className="text-purple-400 font-bold text-sm flex items-center gap-2">
-                      Open <ChevronRight size={16} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* STAGE VIEW */}
-        {page === 'stage' && currentStage && (
-          <div className="h-full bg-zinc-950 overflow-y-auto p-8">
-            <div className="max-w-7xl mx-auto">
-              <button 
-                onClick={() => setPage('dashboard')}
-                className="mb-6 text-gray-400 hover:text-white flex items-center gap-2 font-bold"
-              >
-                <ChevronLeft size={20} /> Back
-              </button>
-
-              <h1 className="text-5xl font-black mb-8">{PRODUCTION_PIPELINE[currentStage].name}</h1>
-
-              <div className="grid grid-cols-2 gap-6">
-                {PRODUCTION_PIPELINE[currentStage].modules.map(module => (
-                  <div 
-                    key={module.id}
-                    onClick={() => { setCurrentModule(module); setPage('module'); }}
-                    className="bg-zinc-900 border-2 border-zinc-800 hover:border-purple-600 p-8 rounded-2xl cursor-pointer transition"
-                  >
-                    <module.icon size={48} className="text-purple-500 mb-4" />
-                    <h3 className="text-3xl font-black mb-3">{module.name}</h3>
-                    {module.tools && (
-                      <p className="text-purple-400 font-bold">{module.tools} AI Tools</p>
-                    )}
-                    <div className="mt-6 text-purple-400 font-bold flex items-center gap-2">
-                      Launch <ChevronRight size={20} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* AI MODULE (with tools) */}
-        {page === 'module' && currentModule && currentModule.tools && (
-          <div className="h-full flex">
-            {/* Tools Sidebar */}
-            <div className="w-1/3 bg-zinc-900 border-r border-zinc-800 overflow-y-auto p-6">
-              <button 
-                onClick={() => setPage('stage')}
-                className="mb-6 text-gray-400 hover:text-white flex items-center gap-2 font-bold"
-              >
-                <ChevronLeft size={20} /> Back
-              </button>
-
-              <h2 className="text-2xl font-black mb-2">{currentModule.name}</h2>
-              <p className="text-sm text-gray-400 mb-8">{currentModule.tools} Tools</p>
-
-              <div className="space-y-2">
-                {AI_TOOLS[currentModule.id]?.map((tool, i) => (
-                  <button 
-                    key={i}
-                    className="w-full text-left bg-zinc-800 hover:bg-purple-600 p-4 rounded-xl transition"
-                  >
-                    <div className="font-bold text-sm">{tool}</div>
+  // --- PERSISTENT UI ---
+  const PersistentUI = () => (
+    <>
+      {/* Top Right Quick Access Hub */}
+      <div className="fixed top-8 right-8 z-[200]">
+        <button onClick={() => setMenuOpen(!menuOpen)} className="bg-purple-600 p-3 rounded-full shadow-2xl hover:scale-110 transition text-white border-2 border-white/20">
+          <Menu size={24} />
+        </button>
+        {menuOpen && (
+          <div className="absolute top-16 right-0 bg-zinc-950 border-2 border-purple-600 p-6 rounded-3xl w-72 shadow-2xl animate-in slide-in-from-right-4 duration-300 z-[210]">
+            <h3 className="text-white font-black uppercase text-xs mb-4 tracking-widest opacity-50 text-right">Quick Access Hub</h3>
+            <div className="flex flex-col gap-2 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
+              {[1, 4, 11, 13, 16, 17, 19, 21].map((p) => {
+                const labels = {
+                  1: "Home", 4: "AI Hub Directory", 11: "Editor Suite", 
+                  13: "AI Enhancement", 16: "Final Hub", 17: "Knowledge Center", 19: "Agent Grok Help Desk", 21: "Finish"
+                };
+                return (
+                  <button key={p} onClick={() => goTo(p)} className="text-right text-[11px] font-black uppercase text-purple-400 p-3.5 hover:bg-purple-600 hover:text-white rounded-xl transition border border-purple-900/30">
+                    {labels[p]}
                   </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Workspace */}
-            <div className="flex-1 bg-zinc-950 flex items-center justify-center">
-              <div className="text-center">
-                <Sparkles size={120} className="text-purple-500 mx-auto mb-8 animate-pulse" />
-                <h3 className="text-4xl font-black mb-4">AI Processing Engine</h3>
-                <p className="text-gray-400 mb-8">Select a tool to begin generation</p>
-                <button className="bg-purple-600 hover:bg-purple-500 px-12 py-4 rounded-xl font-black transition">
-                  Start Generation
-                </button>
-              </div>
+                );
+              })}
             </div>
           </div>
         )}
+      </div>
 
-        {/* TIMELINE EDITOR */}
-        {page === 'module' && currentModule && currentModule.id === 'edit' && (
-          <div className="h-full flex flex-col">
-            <div className="flex-1 flex">
-              {/* Media Browser */}
-              <div className="w-64 bg-zinc-900 border-r border-zinc-800 p-4">
-                <h3 className="text-sm font-black uppercase text-gray-400 mb-4">Media Library</h3>
-                {[...Array(10)].map((_, i) => (
-                  <div key={i} className="bg-zinc-800 p-3 rounded-lg mb-2 cursor-pointer hover:bg-zinc-700">
-                    <div className="text-xs font-bold">Clip_{i+1}.mp4</div>
-                  </div>
-                ))}
-              </div>
+      {/* Persistent Help Bubble - Bottom Right */}
+      <HelpBubble onClick={() => setPage(19)} />
 
-              {/* Preview */}
-              <div className="flex-1 flex items-center justify-center bg-black">
-                <div className="w-full aspect-video max-w-4xl bg-zinc-900 rounded-2xl flex items-center justify-center">
-                  <Play size={80} className="text-gray-600" />
-                </div>
-              </div>
-            </div>
-
-            {/* Timeline */}
-            <div className="h-64 bg-zinc-950 border-t-2 border-purple-600 p-4">
-              <div className="flex justify-between mb-4">
-                <h3 className="font-black uppercase text-sm">Multi-Track Timeline</h3>
-                <button className="bg-purple-600 p-2 rounded"><Play size={20} /></button>
-              </div>
-              <div className="space-y-2">
-                {['Video 1', 'Video 2', 'Audio 1', 'Audio 2', 'Text'].map(track => (
-                  <div key={track} className="bg-zinc-900 h-12 rounded flex items-center px-4 text-sm font-bold text-purple-400">{track}</div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* COLOR GRADING */}
-        {page === 'module' && currentModule && currentModule.id === 'color' && (
-          <div className="h-full flex">
-            <div className="w-1/4 bg-zinc-900 p-6 overflow-y-auto">
-              <h2 className="text-xl font-black mb-6">Color Grading</h2>
-              {['Exposure', 'Contrast', 'Highlights', 'Shadows', 'Temperature', 'Tint', 'Saturation'].map(ctrl => (
-                <div key={ctrl} className="mb-6">
-                  <label className="text-sm font-bold mb-2 block">{ctrl}</label>
-                  <input type="range" min="-100" max="100" defaultValue="0" className="w-full accent-purple-600" />
-                  <div className="flex justify-between text-xs text-gray-500 mt-1">
-                    <span>-100</span><span>0</span><span>+100</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="flex-1 flex items-center justify-center bg-black">
-              <div className="w-full aspect-video max-w-5xl bg-zinc-900 rounded-2xl"></div>
-            </div>
-          </div>
-        )}
-
-        {/* AUDIO MIXER */}
-        {page === 'module' && currentModule && currentModule.id === 'audio' && (
-          <div className="h-full bg-zinc-950 p-8">
-            <h1 className="text-4xl font-black mb-8">Audio Mixing Console</h1>
-            <div className="grid grid-cols-6 gap-4">
-              {['Music', 'Dialogue', 'SFX', 'Ambience', 'Foley', 'Master'].map((ch, i) => (
-                <div key={ch} className={`bg-zinc-900 rounded-2xl p-6 ${i === 5 ? 'border-2 border-purple-600' : ''}`}>
-                  <Mic size={32} className="mx-auto mb-2 text-purple-500" />
-                  <h3 className="font-black text-center mb-4">{ch}</h3>
-                  <div className="h-48 bg-gradient-to-t from-purple-600 to-purple-400 rounded-lg mb-4 opacity-75"></div>
-                  <input type="range" min="0" max="100" defaultValue="75" className="w-full accent-purple-600 mb-2" />
-                  <div className="text-center font-black mb-4">75%</div>
-                  {i < 5 ? (
-                    <div className="flex gap-2">
-                      <button className="flex-1 bg-zinc-800 py-2 rounded text-xs font-bold">MUTE</button>
-                      <button className="flex-1 bg-zinc-800 py-2 rounded text-xs font-bold">SOLO</button>
-                    </div>
-                  ) : (
-                    <button className="w-full bg-purple-600 py-2 rounded font-black">OUTPUT</button>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* EXPORT */}
-        {page === 'module' && currentModule && currentModule.id === 'export' && (
-          <div className="h-full bg-zinc-950 p-8 overflow-y-auto">
-            <h1 className="text-4xl font-black mb-8">Professional Export</h1>
-            
-            <div className="max-w-6xl grid grid-cols-2 gap-8">
-              <div className="bg-zinc-900 p-8 rounded-2xl">
-                <h2 className="text-2xl font-black mb-6">Settings</h2>
-                <div className="space-y-6">
-                  <div>
-                    <label className="text-sm font-bold mb-2 block">Resolution</label>
-                    <div className="grid grid-cols-3 gap-2">
-                      <button className="bg-purple-600 py-3 rounded-xl font-black">8K</button>
-                      <button className="bg-zinc-800 py-3 rounded-xl font-bold">4K</button>
-                      <button className="bg-zinc-800 py-3 rounded-xl font-bold">1080p</button>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-sm font-bold mb-2 block">Format</label>
-                    <select className="w-full bg-zinc-800 border border-zinc-700 px-4 py-3 rounded-xl text-white">
-                      <option>MP4 (H.264)</option>
-                      <option>MOV (ProRes)</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-zinc-900 p-8 rounded-2xl flex flex-col items-center justify-center">
-                <Film size={80} className="text-purple-500 mb-6" />
-                <h3 className="text-3xl font-black mb-4">Ready to Render</h3>
-                <button className="bg-purple-600 hover:bg-purple-500 px-12 py-4 rounded-xl font-black text-xl transition">
-                  Start Rendering
-                </button>
-              </div>
-            </div>
-
-            <div className="mt-12 bg-zinc-900 p-8 rounded-2xl max-w-6xl">
-              <h2 className="text-2xl font-black mb-6">Distribution</h2>
-              <div className="grid grid-cols-5 gap-4">
-                {['YouTube', 'Vimeo', 'Instagram', 'TikTok', 'Custom'].map(p => (
-                  <button key={p} className="bg-zinc-800 hover:bg-purple-600 p-6 rounded-xl transition flex flex-col items-center gap-3">
-                    <Share2 size={32} />
-                    <span className="font-bold text-sm">{p}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* HELP CENTER */}
-        {page === 'help' && (
-          <div className="h-full bg-zinc-950 p-8 flex items-center justify-center">
-            <div className="max-w-4xl w-full bg-zinc-900 border-2 border-purple-600 rounded-3xl overflow-hidden">
-              <div className="bg-purple-600 p-8 flex items-center gap-6">
-                <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center">
-                  <MessageCircle size={40} className="text-purple-600" />
-                </div>
-                <div>
-                  <h2 className="text-4xl font-black">Agent Grok</h2>
-                  <p className="text-purple-200 font-bold">24/7 Professional Support</p>
-                </div>
-              </div>
-
-              <div className="p-8 h-96 bg-black">
-                <div className="bg-zinc-800 rounded-2xl p-6 max-w-md">
-                  <p className="text-sm mb-2">Hello! How can I assist your production today?</p>
-                  <span className="text-xs text-gray-500">Just now</span>
-                </div>
-              </div>
-
-              <div className="p-6 bg-zinc-900 flex gap-4">
-                <input 
-                  type="text" 
-                  placeholder="Ask about any feature..." 
-                  className="flex-1 bg-zinc-800 border border-zinc-700 px-6 py-4 rounded-xl outline-none text-white"
-                />
-                <button className="bg-purple-600 p-4 rounded-xl"><Send size={24} /></button>
-              </div>
-            </div>
-          </div>
-        )}
-
-      </main>
-
-      {/* FOOTER */}
-      {page !== 'welcome' && (
-        <footer className="bg-black border-t border-zinc-800 px-6 py-3 text-center text-xs text-gray-500">
-          MandaStrong Studio Pro 2025 • Professional AI Cinema Suite • Support: MandaStrong1.Etsy.com
-        </footer>
+      {/* Universal Fundraiser Footer */}
+      {page >= 3 && (
+        <div className="fixed bottom-0 left-0 w-full bg-black/90 py-4 text-center z-[150] border-t border-purple-900/30 backdrop-blur-md">
+          <p className="text-[10px] md:text-[13px] font-black text-white uppercase tracking-widest px-4 leading-tight">
+            MANDASTRONG1 2025 ~ Author of Doxy The School Bully ~ Please Help With Our Fundraiser If You Can. Thank you.
+          </p>
+        </div>
       )}
-    </div>
+    </>
   );
-}
+
+  return (
+    <div className="h-screen bg-transparent overflow-hidden relative font-sans selection:bg-purple-600 selection:text-white">
+      <PersistentUI />
+      
+      {/* NO FILTER VIDEO FOUNDATION - background.mp4 */}
+      {(page === 1 || page === 2 || page === 10 || page === 21) && (
+        <div className="absolute inset-0 w-full h-full z-0 overflow-hidden pointer-events-none" key="cinematic-foundation">
+          <video 
+            ref={videoRef} 
+            autoPlay 
+            loop 
+            muted={!audioActive}
+            playsInline 
+            className="w-full h-full object-cover"
+          >
+            <source src="background.mp4" type="video/mp4" />
+          </video>
+        </div>
+      )}
+
+      <main className="relative z-10 h-full">
+        
+        {/* PAGE 1: EXACT IMAGE MATCH (TOP BRANDING, BOTTOM NAVIGATION) */}
+        {page === 1 && (
+          <div className="h-full flex flex-col justify-between items-center text-center px-4 pt-14 pb-20">
+            {/* BRANDING (TOP) */}
+            <div className="z-20">
+              <h1 className="text-5xl md:text-[7rem] lg:text-[10rem] font-black text-black uppercase tracking-tighter leading-none italic font-serif drop-shadow-[0_4px_15px_rgba(255,255,255,0.4)]">
+                MANDASTRONG'S STUDIO
+              </h1>
+              <p className="text-xl md:text-3xl lg:text-5xl font-black text-black italic uppercase tracking-tight drop-shadow-[0_2px_6px_rgba(255,255,255,0.4)] mt-4">
+                Welcome To The All-In-One Make-A-Movie App!
+              </p>
+            </div>
+            
+            <div className="flex-grow pointer-events-none" />
+            
+            {/* NAVIGATION (BOTTOM) */}
+            <div className="flex flex-col items-center gap-6 z-20">
+               <div className="flex gap-6">
+                  <button onClick={() => setPage(2)} className="bg-black text-white px-16 py-5 rounded-xl text-3xl font-black uppercase hover:scale-105 transition-all shadow-2xl active:scale-95">Next</button>
+                  <button onClick={() => setPage(3)} className="bg-black text-white px-16 py-5 rounded-xl text-3xl font-black uppercase hover:scale-105 transition-all shadow-2xl active:scale-95">Login</button>
+                  <button onClick={() => setPage(3)} className="bg-black text-white px-16 py-5 rounded-xl text-3xl font-black uppercase hover:scale-105 transition-all shadow-2xl active:scale-95">Register</button>
+               </div>
+            </div>
+          </div>
+        )}
+
+        {/* PAGE 2: MISSION SPLASH */}
+        {page === 2 && (
+          <div className="h-full flex flex-col justify-center items-center text-center px-4 bg-black/20 backdrop-blur-sm">
+            <Sparkles size={120} className="text-purple-500 mb-8 animate-pulse" />
+            <h1 className="text-6xl md:text-[9.5rem] font-black text-white uppercase leading-none mb-6 italic drop-shadow-lg text-center">
+              MANDASTRONG'S STUDIO
+            </h1>
+            <p className="text-2xl md:text-5xl font-black text-purple-500 uppercase mb-24 tracking-tighter italic max-w-6xl leading-tight">
+              Make Awesome Family Movies Or Put Your Dreams Into Reality. Enjoy!
+            </p>
+            <div className="flex gap-8">
+              <button onClick={() => setPage(1)} className="bg-zinc-900/60 border-2 border-purple-600 px-20 py-6 rounded-[30px] text-2xl font-black uppercase text-purple-400 flex items-center gap-4 transition hover:bg-purple-900/20 shadow-xl">
+                <ChevronLeft size={40}/> Back
+              </button>
+              <button onClick={() => setPage(3)} className="bg-purple-600 border-2 border-purple-400 px-20 py-6 rounded-[30px] text-2xl font-black uppercase text-white shadow-[0_0_60px_rgba(168,85,247,0.5)] flex items-center gap-4 transition hover:scale-105">
+                Next <ChevronRight size={40}/>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* PAGE 3: THE PORTAL ([Login] [Browse For Now] [Register]) */}
+        {page === 3 && (
+          <div className="h-full bg-black pt-16 pb-48 px-8 flex flex-col items-center overflow-y-auto custom-scrollbar">
+              <div className="flex flex-col items-center w-full max-w-7xl">
+                <div className="flex justify-center items-center gap-12 mb-20">
+                    <button onClick={() => setPage(4)} className="bg-zinc-950 border-2 border-purple-900/30 px-16 py-8 rounded-3xl text-4xl font-black text-white uppercase hover:bg-purple-600 transition shadow-xl">Login</button>
+                    <button onClick={() => setPage(4)} className="bg-purple-600 px-16 py-8 rounded-3xl text-4xl font-black text-white uppercase hover:scale-105 transition shadow-[0_0_40px_rgba(147,51,234,0.4)]">Browse For Now</button>
+                    <button onClick={() => setPage(4)} className="bg-zinc-950 border-2 border-purple-900/30 px-16 py-8 rounded-3xl text-4xl font-black text-white uppercase hover:bg-purple-600 transition shadow-xl">Register</button>
+                </div>
+
+                <div className="grid grid-cols-3 gap-10 w-full mt-10">
+                  {[
+                    {t:'Basic', p:'$20', d:['HD Export', '120 AI Tools', '10GB Storage']},
+                    {t:'Pro', p:'$30', d:['4K Export', '360 AI Tools', '100GB Storage']},
+                    {t:'Studio', p:'$50', d:['8K Export', 'All 600 AI Tools', '1TB Storage']}
+                  ].map(plan => (
+                    <div key={plan.t} onClick={() => setSelectedPlan(plan.t)} className={`p-10 rounded-[50px] border-2 transition-all duration-500 text-left cursor-pointer relative ${selectedPlan === plan.t ? 'bg-zinc-900 border-purple-500 shadow-[0_0_80px_rgba(138,43,226,0.5)] scale-105' : 'bg-zinc-950 border-purple-900/20'}`}>
+                      {plan.t === 'Studio' && <div className="absolute -top-4 left-12 bg-purple-600 text-white text-[11px] px-5 py-1.5 rounded-full font-black uppercase tracking-widest shadow-xl">STUDIO ACCESS ACTIVE</div>}
+                      <h3 className="text-3xl font-black text-white mb-2 mt-4 uppercase italic tracking-tighter text-center">{plan.t}</h3>
+                      <div className="text-6xl font-black text-purple-400 mb-10 tracking-tighter text-center">{plan.p}<span className="text-xl text-white/40"> Monthly</span></div>
+                      <ul className="space-y-4 mb-10">
+                        {plan.d.map(item => (
+                          <li key={item} className="text-sm font-black text-white/80 flex items-center gap-4">
+                            <CheckCircle size={18} className="text-purple-500" /> {item}
+                          </li>
+                        ))}
+                      </ul>
+                      {selectedPlan === plan.t && <div className="text-center text-purple-500 font-black tracking-widest uppercase">✓ Master Access</div>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+          </div>
+        )}
+
+        {/* AI BOARDS (PAGES 4-9) - 120 scrollable tools */}
+        {page >= 4 && page <= 9 && (
+          <div className="flex h-full bg-black pt-20 overflow-hidden">
+            <div className="w-1/3 h-full border-r border-purple-900/30 p-12 overflow-y-auto flex flex-col custom-scrollbar bg-black/50 text-purple-400">
+               <div className="flex justify-between items-center mb-10">
+                  <h2 className="text-5xl font-black text-purple-600 uppercase italic leading-none tracking-tighter">
+                    {page === 4 ? "DIRECTORY" : (Object.keys(BOARD_DATA)[page-5]?.toUpperCase() || "EDITOR")}
+                  </h2>
+               </div>
+               
+               {page === 4 && (
+                 <div className="grid grid-cols-1 gap-6 pb-20">
+                    {Object.keys(BOARD_DATA).map((cat, idx) => (
+                      <button key={cat} onClick={() => setPage(5 + idx)} className="bg-zinc-950 border-2 border-purple-900/30 p-12 rounded-[40px] hover:bg-purple-600 group transition shadow-xl text-left flex items-center justify-between px-10">
+                        <span className="text-3xl font-black uppercase text-purple-300 group-hover:text-black italic tracking-tighter">{cat} BOARD</span>
+                        <ChevronRight className="text-purple-900 group-hover:text-black" size={32}/>
+                      </button>
+                    ))}
+                 </div>
+               )}
+
+               {(page >= 5 && page <= 9) && (
+                 <div className="grid grid-cols-1 gap-4 pb-32">
+                    {Object.values(BOARD_DATA)[page-5]?.map((tool, i) => (
+                      <button key={i} className="bg-zinc-950 border-2 border-purple-900/30 p-10 rounded-[30px] group hover:bg-purple-600 transition text-left relative overflow-hidden shadow-lg">
+                        <div className="absolute top-0 left-0 w-1 h-full bg-purple-600 group-hover:bg-black transition-all" />
+                        <span className="text-2xl font-black text-purple-500 group-hover:text-black uppercase italic tracking-tighter leading-none">{tool}</span>
+                      </button>
+                    ))}
+                 </div>
+               )}
+
+               <div className="mt-auto pt-10 flex gap-6 pb-24">
+                  <button onClick={() => setPage(Math.max(1, page-1))} className="bg-zinc-900 border-2 border-purple-600 px-12 py-4 rounded-2xl font-black uppercase text-purple-400 hover:bg-purple-900/20 transition shadow-lg">Back</button>
+                  <button onClick={() => setPage(Math.min(21, page+1))} className="bg-purple-600 border-2 border-purple-400 px-12 py-4 rounded-2xl font-black text-black uppercase hover:bg-purple-500 transition shadow-xl">Next</button>
+               </div>
+            </div>
+
+            <div className="w-2/3 h-full relative overflow-hidden bg-zinc-900 border-l border-purple-900/10 flex items-center justify-center text-center p-12">
+               <div className="bg-black/40 p-12 rounded-[60px] border border-purple-500/20 backdrop-blur-2xl text-center">
+                  <Sparkles size={120} className="text-purple-500 mb-8 mx-auto animate-pulse" />
+                  <h3 className="text-5xl font-black text-white uppercase italic tracking-tighter">AI Production Engine</h3>
+                  <p className="text-purple-400 font-mono mt-6 tracking-widest text-lg opacity-50 italic text-center">Synthesizing High-Resolution Cinematic Assets...</p>
+               </div>
+            </div>
+          </div>
+        )}
+
+        {/* PAGE 10: EDITOR'S CHOICE (ONLY Title + Upload) */}
+        {page === 10 && (
+          <div className="h-full flex flex-col justify-center items-center text-center px-4 bg-black/10 backdrop-blur-md">
+            <h1 className="text-6xl md:text-[10rem] font-black text-purple-600 uppercase leading-none mb-10 italic drop-shadow-2xl text-center leading-none">
+              EDITOR'S CHOICE
+            </h1>
+            <div className="w-full max-w-4xl h-[45vh] bg-zinc-900/90 rounded-[100px] border-4 border-dashed border-purple-500/40 flex flex-col items-center justify-center shadow-3xl group hover:border-purple-500 transition-all">
+               <Upload size={140} className="text-purple-500 group-hover:scale-110 transition-transform mb-10 animate-bounce" />
+               <button className="bg-purple-600 text-white px-24 py-10 rounded-[60px] text-5xl font-black uppercase italic shadow-[0_0_60px_rgba(147,51,234,0.5)] hover:scale-105 active:scale-95 transition">
+                  Upload Media
+               </button>
+               <p className="text-purple-400 mt-10 font-black uppercase tracking-[0.4em] text-sm opacity-50 text-center">8K RAW / AI Generated Sequences Supported</p>
+            </div>
+          </div>
+        )}
+
+        {/* PAGE 19: AGENT GROK INLINE HELP CENTRE (24/7 Support) */}
+        {page === 19 && (
+           <div className="h-full bg-black p-10 pt-24 flex flex-col items-center overflow-y-auto custom-scrollbar">
+              <h1 className="text-[9rem] font-black text-purple-600 uppercase italic mb-16 tracking-tighter leading-none text-center leading-none">AGENT GROK</h1>
+              <div className="w-full max-w-5xl bg-zinc-950 border-[6px] border-purple-600 rounded-[80px] h-[65vh] flex flex-col shadow-2xl overflow-hidden relative">
+                 <div className="bg-purple-600 p-12 flex items-center gap-10">
+                    <div className="w-28 h-28 bg-black rounded-full flex items-center justify-center border-8 border-white/20 shadow-xl overflow-hidden text-purple-500">
+                       <MessageCircle size={80} />
+                    </div>
+                    <div>
+                       <h3 className="text-5xl font-black text-white uppercase italic leading-none tracking-tighter">Inline Help Centre</h3>
+                       <p className="text-purple-200 text-xl font-black uppercase tracking-widest mt-4 animate-pulse italic text-left">24/7 Professional Live Support</p>
+                    </div>
+                 </div>
+                 <div className="flex-grow p-16 space-y-10 overflow-y-auto bg-black/20 custom-scrollbar text-white font-bold text-3xl uppercase italic tracking-tight leading-relaxed text-center leading-none">
+                    Welcome to the 24/7 Help Centre. How can Agent Grok assist your cinematic vision today?
+                 </div>
+                 <div className="p-12 bg-black/60 flex gap-10">
+                    <input type="text" placeholder="Describe your technical or creative issue..." className="flex-grow bg-black border-4 border-purple-900 p-8 rounded-3xl font-black text-white text-2xl italic outline-none focus:border-purple-600" />
+                    <button className="bg-purple-600 p-8 rounded-3xl text-white shadow-2xl hover:scale-105 transition"><Send size={48}/></button>
+                 </div>
+              </div>
+           </div>
+        )}
+
+        {/* PAGE 21: FINALE (thatsallfolks.mp4) */}
+        {page === 21 && (
+          <div className="h-full bg-black flex flex-col justify-center items-center p-20 text-center relative overflow-hidden overflow-y-auto custom-scrollbar">
+            <div className="w-full max-w-[1500px] h-[40vh] bg-zinc-900 rounded-[100px] border-[12px] border-double border-purple-600 flex items-center justify-center mb-12 shadow-[0_0_150px_rgba(138,43,226,0.4)] relative overflow-hidden">
+               <video autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover">
+                  <source src="thatsallfolks.mp4" type="video/mp4" />
+               </video>
+               <span className="relative z-10 text-white font-mono text-6xl uppercase italic tracking-[1.2em] animate-pulse drop-shadow-2xl font-black text-center leading-none">thatsallfolks.mp4</span>
+            </div>
+            <h1 className="text-[14rem] font-black text-purple-600 uppercase italic leading-none mb-10 drop-shadow-[0_0_100px_rgba(138,43,226,0.7)] tracking-tighter underline underline-offset-8 decoration-purple-900/50 text-center leading-none">THAT'S ALL FOLKS!</h1>
+            <div className="max-w-6xl space-y-16 mb-24 text-center">
+              <p className="text-5xl font-bold text-
