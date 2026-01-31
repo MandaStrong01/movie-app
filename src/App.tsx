@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 
 import { SubscriptionProvider } from './contexts/SubscriptionContext';
+const OWNER_EMAIL = "woolleya129@gmail.com";
 
 // --- PRODUCTION AI TOOLSET (600 TOTAL - 120 PER BOARD) ---
 const generateOrderedTools = (category: string) => {
