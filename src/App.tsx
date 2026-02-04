@@ -1,1107 +1,1115 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Play, ChevronLeft, ChevronRight, Upload, Download, Save, Share2, Film, Scissors, Volume2, Zap, Settings, Eye, Trash2, Copy, Plus, Minus } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  Sparkles, Menu, Search, Play, MessageCircle, Film, Music,
+  Image as ImageIcon, Video, Mic, Zap, Clock, Upload, Database,
+  Sliders, Layers, Palette, Download, Share2, Youtube, Twitter, Instagram,
+  Facebook, BookOpen, Shield, Heart, Send, X, ChevronRight, ChevronLeft,
+  Home, Settings, TrendingUp, User, Lock, Mail, Check, Headphones,
+  Volume2, Activity, Eye, FileVideo, PenTool, Camera, Users, Guitar,
+  LogOut, Plus, Trash2, Edit, Save, Folder, FileText
+} from 'lucide-react';
+import { useAuth } from './contexts/AuthContext';
+import { supabase } from './lib/supabase';
 
-const OCEAN_VIDEO = "https://assets.mixkit.co/videos/preview/mixkit-ocean-waves-loop-1196-large.mp4";
-const AVATAR_VIDEO = "https://assets.mixkit.co/videos/preview/mixkit-person-holding-a-camera-3037-small.mp4";
+const generateTools = (baseTools: string[]) => {
+  const tools = [];
+  for (let i = 0; i < 120; i++) {
+    const base = baseTools[i % baseTools.length];
+    const suffix = i >= baseTools.length ? ` PRO ${Math.floor(i / baseTools.length)}` : "";
+    tools.push(`${base}${suffix}`);
+  }
+  return tools;
+};
 
-const AI_TOOLS = [
-  "Script Generator", "Story Architect", "Plot Weaver", "Character Designer", "Dialogue AI",
-  "Scene Planner", "Shot List Pro", "Storyboard Creator", "Script Analyzer", "Genre Consultant",
-  "Premise Builder", "Conflict Generator", "Theme Developer", "Arc Constructor", "Beat Sheet AI",
-  "Logline Writer", "Synopsis Pro", "Treatment Builder", "Pitch Deck AI", "Budget Calculator",
-  "Schedule Optimizer", "Location Scout AI", "Casting Director", "Costume Designer", "Prop Manager",
-  "Set Designer Pro", "Mood Board AI", "Color Palette Pro", "Style Guide", "Reference Library",
-  "Shot Composer", "Camera Angle AI", "Movement Planner", "Lens Advisor", "Focal Length Guide",
-  "Depth Calculator", "Focus Puller", "Exposure Meter", "ISO Optimizer", "Aperture Guide",
-  "Shutter Speed AI", "White Balance Pro", "ND Filter Guide", "Gimbal Stabilizer", "Dolly Tracker",
-  "Crane Planner", "Steadicam AI", "Handheld Smoother", "Drone Pilot", "Aerial Composer",
-  "Time-lapse Builder", "Hyper-lapse Pro", "Slow Motion AI", "Speed Ramper", "Frame Blender",
-  "Optical Flow Pro", "Motion Interpolation", "Frame Rate Converter", "Aspect Ratio Tool", "Crop Assistant",
-  "Lighting Designer", "Three-Point Setup", "Key Light AI", "Fill Light Pro", "Back Light Guide",
-  "Practical Lights", "Natural Light AI", "Studio Setup", "Location Light", "Color Temperature",
-  "Gel Selector", "Light Intensity", "Shadow Control", "Contrast Manager", "Dynamic Range",
-  "HDR Mapper", "Exposure Blend", "Highlight Recovery", "Shadow Lifter", "Midtone Balance",
-  "LUT Creator Pro", "Grade Matcher", "Color Harmony", "Cinematic Look", "Film Emulation",
-  "Digital Cinema", "Vintage Filter", "Modern Grade", "Commercial Style", "Documentary Look",
-  "Audio Recorder Pro", "Voice Capture", "ADR Studio", "Foley Creator", "Ambience Generator",
-  "Music Composer AI", "Sound Designer", "Audio Editor Pro", "Noise Reducer", "Hum Remover",
-  "Click Eliminator", "Pop Filter", "Breath Remover", "De-Esser Pro", "Compressor AI",
-  "EQ Wizard", "Reverb Designer", "Delay Creator", "Chorus Effect", "Flanger Pro",
-  "Phaser Effect", "Distortion AI", "Saturation Pro", "Limiter Guard", "Gate Controller",
-  "Expander Pro", "Multi-band Comp", "Stereo Widener", "Pan Automation", "Volume Mixer",
-  "Fade Designer", "Cross-fade Pro", "Audio Ducking", "Side-chain AI", "Sync Master",
-  "Voice Clone AI", "Text-to-Speech Pro", "Speech-to-Text", "Auto Transcribe", "Caption Generator",
-  "Subtitle Sync", "Translation AI", "Localization Pro", "Dubbing Studio", "Lip Sync AI",
-  "Voice Enhancer", "Clarity Boost", "Vocal Isolation", "Background Remover", "Voice Morph",
-  "Pitch Shifter", "Tempo Changer", "Voice Age AI", "Gender Morph", "Accent Trainer",
-  "Dialect Generator", "Emotion Mapper", "Tone Analyzer", "Inflection AI", "Pronunciation Guide",
-  "Timeline Master", "Multi-track Editor", "Ripple Edit Pro", "Roll Edit AI", "Slip Editor",
-  "Slide Tool", "Trim Precision", "Extend Editor", "Split Smart", "Join Seamless",
-  "Group Manager", "Link Controller", "Nest Creator", "Compound Clip", "Multi-cam Sync",
-  "Clip Merger", "Replace Tool", "Insert Smart", "Overwrite Pro", "Three-point Edit",
-  "Four-point Edit", "Match Frame", "Find Gap", "Sequence Settings", "Timeline Zoom",
-  "Transition Library", "Fade Master", "Dissolve Pro", "Wipe Designer", "Slide Animator",
-  "Push Effect", "Zoom Transition", "Spin Creator", "Flip Designer", "3D Rotate",
-  "Cube Spin", "Door Swing", "Window Reveal", "Curtain Pull", "Iris Wipe",
-  "Clock Wipe", "Heart Shape", "Star Burst", "Organic Wipe", "Light Leak",
-  "Lens Flare Pro", "Light Rays", "God Rays", "Sun Burst", "Glow Effect",
-  "Bloom Designer", "Chromatic Aberration", "RGB Split", "Glitch Generator", "Data Moshing",
-  "Green Screen Pro", "Chroma Keyer", "Luma Key", "Difference Key", "Color Range",
-  "Spill Suppressor", "Edge Refiner", "Matte Cleaner", "Roto Tool Pro", "Mask Designer",
-  "Track Mask", "Planar Tracker", "Point Tracker", "Camera Tracker", "Object Tracker",
-  "Stabilizer Pro", "Deshake AI", "Rolling Shutter Fix", "Lens Corrector", "Distortion Fixer",
-  "Vignette Tool", "CA Remover", "Sharpen Pro", "Blur Master", "Gaussian Blur",
-  "Motion Blur Pro", "Radial Blur", "Zoom Blur", "Tilt-shift Effect", "Miniature Mode",
-  "Film Grain AI", "Noise Generator", "Dust Overlay", "Scratch Effect", "Damage Creator",
-  "Old Film Look", "8mm Emulator", "16mm Style", "Super 8 Feel", "VHS Aesthetic",
-  "Scan Lines", "CRT Effect", "TV Static", "Signal Error", "Pixel Sorter",
-  "Weather Generator", "Rain Creator", "Snow Effect", "Fog Machine", "Mist Layer",
-  "Smoke Designer", "Fire Simulator", "Explosion FX", "Debris System", "Spark Generator",
-  "Lightning Strike", "Thunder Flash", "Wind Effect", "Leaves Particles", "Dust Motes",
-  "Light Particles", "Magic Sparkles", "Energy Beam", "Laser Effect", "Plasma Arc",
-  "Muzzle Flash", "Blood Splatter", "Bullet Hole", "Glass Shatter", "Wood Splinter",
-  "Metal Dent", "Concrete Crack", "Dust Cloud", "Dirt Kick", "Water Splash",
-  "Sweat Drop", "Tear Effect", "Breath Vapor", "Steam Effect", "Heat Haze",
-  "Speed Lines", "Motion Trails", "Action Lines", "Impact Flash", "Screen Shake",
-  "Face Swap AI", "Age Progression", "Age Regression", "Beauty Filter Pro", "Skin Smoother",
-  "Eye Enhancer", "Teeth Whitener", "Hair Color AI", "Makeup Virtual", "Face Morph",
-  "Expression Clone", "Emotion Transfer", "Blink Fixer", "Gaze Corrector", "Head Tracker",
-  "Body Tracker", "Pose Estimator", "Motion Capture", "Facial Capture", "Performance Clone",
-  "Lower Third Pro", "Title Designer", "End Card Maker", "Bug Creator", "Watermark Pro",
-  "Logo Animator", "Text Animator", "Typewriter Effect", "Letter Reveal", "Word Slide",
-  "Line Draw", "Handwriting AI", "Neon Text", "Fire Text", "Ice Text",
-  "Gold Text", "Chrome Text", "Glass Text", "3D Extrude", "Bevel Tool",
-  "Primary Corrector", "Secondary Grade", "Creative LUT", "Curves Master", "Color Wheels Pro",
-  "HSL Secondary", "Qualifier Tool", "Power Window", "Gradient Mask", "Vignette Pro",
-  "Color Match AI", "Shot Matcher", "Auto Balance", "Auto Tone", "Auto Contrast",
-  "HDR Tone Map", "Gamut Warning", "False Color", "Zebra Pattern", "Waveform Pro",
-  "Vectorscope Pro", "Histogram Pro", "Parade RGB", "Luma Graph", "Chroma Meter",
-  "Lift Gamma Gain", "Offset Control", "Contrast Pro", "Saturation AI", "Vibrance Tool",
-  "Hue Shift Pro", "Temperature Control", "Tint Adjuster", "Shadow Detail", "Midtone Balance",
-  "Highlight Roll", "Black Point", "White Point", "Clarity Boost", "Dehaze Pro",
-  "Master Mix", "Loudness Meter", "Peak Limiter", "RMS Analyzer", "True Peak",
-  "LUFS Meter", "Dynamic Range", "Broadcast Safe", "Audio Normalize", "Level Matcher",
-  "Phase Correlation", "Stereo Analyzer", "Frequency Graph", "Spectral Display", "Audio Repair",
-  "Layer Manager", "Blend Modes", "Opacity Control", "Track Matte", "Alpha Channel",
-  "Premultiply", "Channel Mixer", "Extract Channel", "Combine RGBA", "Split Channels",
-  "Luma Matte", "Color Matte", "Difference Matte", "Garbage Matte", "Hold Out Matte",
-  "3D Camera", "3D Light", "3D Layer", "Extrusion Pro", "Bevel Designer",
-  "Material Editor", "Texture Mapper", "Environment Map", "Reflection Map", "Ray Tracer",
-  "Shadow Catcher", "Ambient Occlusion", "Global Illumination", "Caustics", "Volumetrics",
-  "Keyframe Pro", "Ease In Out", "Bezier Control", "Graph Editor", "Velocity Graph",
-  "Motion Path", "Orient Along Path", "Position Animator", "Rotation Controller", "Scale Animator",
-  "Opacity Fader", "Parameter Control", "Expression Engine", "Parent Link", "Null Object",
-  "2D Tracker Pro", "3D Camera Solve", "Planar Track Pro", "Point Cloud", "Match Move",
-  "Stabilization Pro", "Smooth Motion", "Lock Shot", "Remove Jitter", "Warp Stabilizer",
-  "Rolling Shutter Repair", "Parallax Fixer", "Perspective Match", "Corner Pin", "Mesh Warp",
-  "Time Remapping", "Speed Curves", "Frame Hold", "Freeze Frame", "Reverse Time",
-  "Loop Creator", "Ping Pong", "Time Stretch", "Speed Ramp Pro", "Optical Flow Advanced",
-  "Frame Blending Pro", "Motion Vectors", "Twixtor Effect", "Time Displacement", "Temporal Smooth",
-  "Render Queue Pro", "Batch Export", "Smart Export", "Preset Manager", "Format Selector",
-  "Codec Optimizer", "Bitrate Calculator", "Quality Analyzer", "File Validator", "Metadata Editor",
-  "Timecode Burn", "Slate Generator", "Watermark Embed", "Caption Burn", "Chapter Markers",
-  "DVD Authoring", "Blu-ray Master", "DCP Creator", "Cinema Package", "Broadcast Delivery",
-  "YouTube Optimizer", "Vimeo Pro", "Instagram Reels", "TikTok Format", "Facebook Video",
-  "Twitter Optimize", "LinkedIn Video", "Twitch Export", "Discord Compress", "WhatsApp Format",
-  "Project Organizer", "Media Browser", "Smart Bins", "Metadata Tagger", "Keyword Search",
-  "Rating System", "Color Labels", "Comments Manager", "Notes Panel", "Task Tracker",
-  "Version Control", "Revision History", "Team Collaborate", "Client Review", "Approval System",
-  "Archive Project", "Consolidate Media", "Relink Files", "Proxy Manager", "Offline Mode",
-  "Neural Engine AI", "Machine Learning", "Deep Learning Pro", "AI Upscale 8K", "Temporal Denoise",
-  "Scene Detection", "Smart Conform", "Auto Reframe", "Content Aware Fill", "Professional Master",
-  "360 Video Pro", "VR Content", "AR Creator", "XR Studio", "Spatial Audio Pro",
-  "Dolby Atmos", "5.1 Surround", "7.1 Cinema", "Binaural Audio", "Ambisonic Mix",
-  "Multi-format Export", "Adaptive Bitrate", "Streaming Optimizer", "Live Broadcast", "Remote Collab",
-  "Cloud Render", "Distributed Processing", "GPU Accelerate", "Real-time Preview", "Proxy Workflow",
-  "Media Management", "Asset Tracking", "Rights Management", "Version Tracking", "Backup Automation",
-  "Security Encryption", "Watermark Protection", "DRM Integration", "Access Control", "Audit Trail",
-  "Analytics Dashboard", "Usage Metrics", "Performance Monitor", "Quality Control", "Delivery Check",
-  "Format Conversion", "Standards Compliance", "Color Space Convert", "Frame Rate Adapt", "Resolution Scale",
-  "Audio Conform", "Loudness Normalize", "Sync Validation", "Metadata Embed", "Closed Caption QC",
-  "Subtitle Validation", "Language Check", "Accessibility Audit", "Platform Compliance", "Broadcast Standards",
-  "Cinema DCP Check", "Festival Format", "Archive Format", "Preservation Master", "Distribution Copy",
-  "Screening Preview", "Client Review Copy", "Edit Decision List", "AAF Export", "XML Exchange",
-  "Project Archive", "Media Consolidate", "Conform AAF", "Reconnect Media", "Update Links"
-];
+const TOOL_BOARDS = {
+  Writing: generateTools(["Dialogue Writer", "Plot Generator", "Scene Writer", "Story Outliner", "Character Developer", "Dialogue Editor", "Plot Designer", "Story Planner", "Treatment Writer", "Script Formatter", "Plot Creator", "Three Act Builder"]),
+  Voice: generateTools(["Voice Maker", "Voice Cloner", "Voice Creator Tool", "Voice Recorder", "Speech Converter", "Voice Builder", "Advanced Voice Generator", "Voice Studio Tool", "Premium Voice Generator", "Voice Audio Tool", "Emotional Voice Generator", "Advanced Speech Creator"]),
+  Image: generateTools(["Image Creator", "Advanced Image Generator", "Design Generator", "Image Tool", "Art Maker", "Art Mixer", "Image Stream Tool", "Art Library Tool", "Workflow Tool", "Auto Image Generator", "Image Studio Pro", "Easy Image Generator"]),
+  Video: generateTools(["Motion Video Maker", "Video Creator", "Avatar Generator", "Video Synthesizer", "Video Studio", "Video Flow Generator", "Video Creator Studio", "Video Crafter", "Image to Motion Tool", "Video Style Tool", "Temporal Flow Tool", "Frame Blender"]),
+  Motion: generateTools(["Motion Animator", "Motion Studio", "Auto Animator", "Motion Flow Tool", "Motion Capture Pro", "Webcam Motion Tool", "Skeleton Tracker", "Joint Tracker", "Character Rigger", "3D Character Studio", "Player Avatar Creator", "Avatar Generator"]),
+  Editing: generateTools(["Smart Video Editor", "Auto Editor", "Video Tools Suite", "Edit Master", "Scene Detector", "Beat Syncer", "Auto Assembly Tool", "Smart Timeline", "Highlight Finder", "Key Moment Finder", "Context Editor", "Intelligent Cutter"])
+};
 
-const App = () => {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [avatarPlaying, setAvatarPlaying] = useState(false);
-  const [showEnhancementStudio, setShowEnhancementStudio] = useState(false);
-  const [showRenderModal, setShowRenderModal] = useState(false);
-  const [renderProgress, setRenderProgress] = useState(0);
+const ENHANCEMENT_TOOLS = ["AI Upscaling", "Noise Reduction", "Stabilization", "Color Enhancement", "Audio Enhancement", "Frame Interpolation", "Sharpening", "Deblur", "HDR Tone Mapping", "Face Enhancement", "Auto Crop", "Smart Zoom", "Background Removal", "Object Removal", "Sky Replacement", "Style Transfer", "Auto Color Grade", "Slow Motion", "Time Lapse", "Motion Blur", "Depth of Field", "Vignette", "Grain Removal", "Contrast Boost", "Saturation Boost", "Exposure Fix", "White Balance", "Shadow Recovery", "Highlight Recovery", "Detail Enhancement"];
+
+export default function App() {
+  const [page, setPage] = useState(1);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [duration, setDuration] = useState(90);
-  const oceanRef = useRef(null);
-  const avatarRef = useRef(null);
+  const [selectedPlan, setSelectedPlan] = useState('pro');
+  const [volume, setVolume] = useState(100);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [registerName, setRegisterName] = useState('');
+  const [registerEmail, setRegisterEmail] = useState('');
+  const [registerPassword, setRegisterPassword] = useState('');
+  const [authError, setAuthError] = useState('');
+  const [authSuccess, setAuthSuccess] = useState('');
+  const [chatMessages, setChatMessages] = useState<Array<{role: 'user' | 'assistant', message: string}>>([
+    { role: 'assistant', message: 'Hello! I\'m Agent Grok, your 24/7 assistant. How can I help you today?' }
+  ]);
+  const [chatInput, setChatInput] = useState('');
+  const [projects, setProjects] = useState<any[]>([]);
+  const [currentProject, setCurrentProject] = useState<any>(null);
+  const [projectTitle, setProjectTitle] = useState('');
+  const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
+  const [menuPageIndex, setMenuPageIndex] = useState(0);
+
+  const { user, signIn, signUp, signOut } = useAuth();
 
   useEffect(() => {
-    if (oceanRef.current && (currentPage === 1 || currentPage === 2)) {
-      oceanRef.current.muted = false;
-      const playPromise = oceanRef.current.play();
-      if (playPromise !== undefined) {
-        playPromise.catch(() => {
-          oceanRef.current.muted = true;
-          oceanRef.current.play();
-        });
+    if (videoRef.current && page === 1) {
+      videoRef.current.play().catch(() => {});
+    }
+  }, [page]);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [page]);
+
+  useEffect(() => {
+    if (user) {
+      loadProjects();
+    }
+  }, [user]);
+
+  const loadProjects = async () => {
+    if (!user) return;
+    const { data, error } = await supabase
+      .from('movie_projects')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('updated_at', { ascending: false });
+
+    if (data) {
+      setProjects(data);
+    }
+  };
+
+  const createProject = async () => {
+    if (!user || !projectTitle) return;
+
+    const { data, error } = await supabase
+      .from('movie_projects')
+      .insert({
+        user_id: user.id,
+        title: projectTitle,
+        duration: duration,
+        current_phase: 1,
+        completed: false
+      })
+      .select()
+      .single();
+
+    if (data) {
+      setCurrentProject(data);
+      setProjects([data, ...projects]);
+      setProjectTitle('');
+      setAuthSuccess('Project created successfully!');
+      setTimeout(() => setAuthSuccess(''), 3000);
+    }
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError('');
+    setAuthSuccess('');
+
+    try {
+      await signIn(loginEmail, loginPassword);
+      setAuthSuccess('Login successful!');
+      setTimeout(() => {
+        setAuthSuccess('');
+        setPage(4);
+      }, 1500);
+    } catch (error: any) {
+      setAuthError(error.message || 'Login failed');
+    }
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError('');
+    setAuthSuccess('');
+
+    try {
+      await signUp(registerEmail, registerPassword);
+      setAuthSuccess('Account created! You can now login.');
+      setRegisterName('');
+      setRegisterEmail('');
+      setRegisterPassword('');
+    } catch (error: any) {
+      setAuthError(error.message || 'Registration failed');
+    }
+  };
+
+  const handleLogout = async () => {
+    await signOut();
+    setPage(1);
+    setProjects([]);
+    setCurrentProject(null);
+  };
+
+  const handleChatSend = async () => {
+    if (!chatInput.trim()) return;
+
+    const userMessage = chatInput;
+    setChatMessages([...chatMessages, { role: 'user', message: userMessage }]);
+    setChatInput('');
+
+    setTimeout(() => {
+      const responses = [
+        "I can help you with that! Let me guide you through the process.",
+        "Great question! Here's what you need to know...",
+        "I'm here to help! Let me explain how that works.",
+        "That's a fantastic idea! Here are some suggestions...",
+        "I understand. Let me break this down for you step by step."
+      ];
+      const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+      setChatMessages(prev => [...prev, { role: 'assistant', message: randomResponse }]);
+    }, 1000);
+  };
+
+  const togglePlayPause = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
       }
-    }
-  }, [currentPage]);
-
-  const handleAvatarPlay = () => {
-    if (avatarRef.current) {
-      avatarRef.current.play();
-      setAvatarPlaying(true);
+      setIsPlaying(!isPlaying);
     }
   };
 
-  const renderPage = () => {
-    switch(currentPage) {
-      case 1:
-        return <Page1 
-          oceanRef={oceanRef} 
-          avatarRef={avatarRef}
-          avatarPlaying={avatarPlaying}
-          onAvatarPlay={handleAvatarPlay}
-          onNext={() => setCurrentPage(2)}
-          onLogin={() => setCurrentPage(3)}
-          onRegister={() => setCurrentPage(3)}
-        />;
-      case 2:
-        return <Page2 
-          oceanRef={oceanRef}
-          onBack={() => setCurrentPage(1)}
-          onNext={() => setCurrentPage(3)}
-        />;
-      case 3:
-        return <Page3 
-          onBack={() => setCurrentPage(2)}
-          onNext={() => setCurrentPage(4)}
-        />;
-      case 4:
-      case 5:
-      case 6:
-      case 7:
-      case 8:
-        return <ToolBoardPage 
-          pageNum={currentPage}
-          tools={AI_TOOLS.slice((currentPage - 4) * 120, (currentPage - 3) * 120)}
-          onBack={() => setCurrentPage(currentPage - 1)}
-          onNext={() => setCurrentPage(currentPage + 1)}
-          onToolClick={(tool) => setCurrentPage(9)}
-        />;
-      case 9:
-      case 11:
-      case 12:
-        return <EditorPage 
-          pageNum={currentPage - 8}
-          onBack={() => setCurrentPage(currentPage - 1)}
-          onNext={() => setCurrentPage(currentPage + 1)}
-        />;
-      case 10:
-        return <EditorsChoicePage
-          onBack={() => setCurrentPage(9)}
-          onNext={() => setCurrentPage(11)}
-        />;
-      case 13:
-        return <FinalEditorPage 
-          onBack={() => setCurrentPage(12)}
-          onNext={() => setCurrentPage(14)}
-        />;
-      case 14:
-        return <ViewerPage 
-          onBack={() => setCurrentPage(13)}
-          onNext={() => setCurrentPage(15)}
-        />;
-      case 15:
-        return <LegalPage 
-          title="Terms of Service"
-          onBack={() => setCurrentPage(14)}
-          onNext={() => setCurrentPage(16)}
-        />;
-      case 16:
-        return <LegalPage 
-          title="Disclaimer"
-          onBack={() => setCurrentPage(15)}
-          onNext={() => setCurrentPage(17)}
-        />;
-      case 17:
-        return <LegalPage 
-          title="Privacy Policy"
-          onBack={() => setCurrentPage(16)}
-          onNext={() => setCurrentPage(18)}
-        />;
-      case 18:
-        return <LegalPage 
-          title="Social Media Guidelines"
-          onBack={() => setCurrentPage(17)}
-          onNext={() => setCurrentPage(19)}
-        />;
-      case 19:
-        return <CommunityPage 
-          onBack={() => setCurrentPage(18)}
-          onNext={() => setCurrentPage(20)}
-        />;
-      case 20:
-        return <ContactPage 
-          onBack={() => setCurrentPage(19)}
-          onNext={() => setCurrentPage(21)}
-        />;
-      case 21:
-        return <ThankYouPage 
-          onBack={() => setCurrentPage(20)}
-        />;
-      default:
-        return null;
-    }
+  const goTo = (p: number) => {
+    setPage(p);
+    setMenuOpen(false);
   };
 
-  return (
-    <div className="w-full h-screen overflow-hidden bg-black">
-      {renderPage()}
-    </div>
-  );
-};
+  const QuickAccessMenu = () => {
+    const allPages = [
+      {page: 1, label: "Page 1 - Home"},
+      {page: 2, label: "Page 2 - Intro"},
+      {page: 3, label: "Page 3 - Login/Register"},
+      {page: 4, label: "Page 4 - AI Hub"},
+      {page: 5, label: "Page 5 - Writing Board"},
+      {page: 6, label: "Page 6 - Voice Board"},
+      {page: 7, label: "Page 7 - Image Board"},
+      {page: 8, label: "Page 8 - Video Board"},
+      {page: 9, label: "Page 9 - Motion Board"},
+      {page: 10, label: "Page 10 - Editor's Choice"},
+      {page: 11, label: "Page 11 - Editor Suite"},
+      {page: 12, label: "Page 12 - My Projects"},
+      {page: 13, label: "Page 13 - Enhancement"},
+      {page: 14, label: "Page 14 - Upload Assets"},
+      {page: 15, label: "Page 15 - Timeline Builder"},
+      {page: 16, label: "Page 16 - Export"},
+      {page: 17, label: "Page 17 - Guide"},
+      {page: 18, label: "Page 18 - Terms"},
+      {page: 19, label: "Page 19 - Help Desk"},
+      {page: 20, label: "Page 20 - Community"},
+      {page: 21, label: "Page 21 - Finish"}
+    ];
 
-const Page1 = ({ oceanRef, avatarRef, avatarPlaying, onAvatarPlay, onNext, onLogin, onRegister }) => (
-  <div className="relative w-full h-full overflow-hidden">
-    <video 
-      ref={oceanRef}
-      autoPlay 
-      loop 
-      playsInline
-      className="absolute inset-0 w-full h-full object-cover"
-    >
-      <source src={OCEAN_VIDEO} type="video/mp4" />
-    </video>
+    const itemsPerPage = 5;
+    const startIndex = menuPageIndex * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const displayedPages = allPages.slice(startIndex, endIndex);
+    const totalMenuPages = Math.ceil(allPages.length / itemsPerPage);
 
-    <div className="absolute bottom-8 right-8 w-64 h-48 rounded-full overflow-hidden border-4 border-white shadow-2xl">
-      <video 
-        ref={avatarRef}
-        loop
-        playsInline
-        className="w-full h-full object-cover"
-      >
-        <source src={AVATAR_VIDEO} type="video/mp4" />
-      </video>
-      {!avatarPlaying && (
-        <button 
-          onClick={onAvatarPlay}
-          className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 hover:bg-opacity-60 transition-all duration-300"
-        >
-          <div className="w-16 h-16 flex items-center justify-center bg-white rounded-full shadow-lg hover:scale-110 transition-transform">
-            <Play className="w-8 h-8 text-black ml-1" fill="black" />
-          </div>
-        </button>
-      )}
-    </div>
-
-    <div className="absolute inset-0 flex flex-col items-center justify-center">
-      <h1 className="text-7xl font-black text-black bg-white bg-opacity-95 px-12 py-6 mb-6 shadow-2xl" 
-          style={{ fontFamily: 'Impact, sans-serif', letterSpacing: '0.15em' }}>
-        MandaStrong Studio
-      </h1>
-      <p className="text-2xl font-bold italic text-black bg-white bg-opacity-90 px-8 py-4 mb-16 shadow-xl">
-        Professional cinema production platform with AI-powered tools for creating feature-length films up to 3 hours
-      </p>
-      
-      <div className="flex gap-6">
-        <button onClick={onNext} className="px-12 py-5 bg-black text-white font-bold text-xl rounded-lg hover:bg-gray-800 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105">
-          Next
-        </button>
-        <button onClick={onLogin} className="px-12 py-5 bg-black text-white font-bold text-xl rounded-lg hover:bg-gray-800 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105">
-          Login
-        </button>
-        <button onClick={onRegister} className="px-12 py-5 bg-black text-white font-bold text-xl rounded-lg hover:bg-gray-800 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105">
-          Register
-        </button>
-      </div>
-    </div>
-  </div>
-);
-
-const Page2 = ({ oceanRef, onBack, onNext }) => (
-  <div className="relative w-full h-full overflow-hidden">
-    <video 
-      ref={oceanRef}
-      autoPlay 
-      loop 
-      muted={false}
-      playsInline
-      className="absolute inset-0 w-full h-full object-cover"
-    >
-      <source src={OCEAN_VIDEO} type="video/mp4" />
-    </video>
-
-    <div className="absolute inset-0 flex flex-col items-center justify-center">
-      <h1 className="text-7xl font-black italic text-black bg-white bg-opacity-95 px-12 py-6 mb-6 shadow-2xl"
-          style={{ fontFamily: 'Impact, sans-serif', letterSpacing: '0.1em' }}>
-        MANDASTRONG'S STUDIO
-      </h1>
-      <p className="text-3xl font-bold italic text-black bg-white bg-opacity-90 px-10 py-5 mb-16 max-w-4xl text-center shadow-xl leading-relaxed">
-        Welcome! Make Awesome Family Videos Or Turn Your Dreams Into Film Reality! Enjoy.
-      </p>
-      
-      <div className="flex gap-6">
-        <button onClick={onBack} className="px-12 py-5 bg-black text-white font-bold text-xl rounded-lg hover:bg-gray-800 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105">
-          Back
-        </button>
-        <button onClick={onNext} className="px-12 py-5 bg-black text-white font-bold text-xl rounded-lg hover:bg-gray-800 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105">
-          Next
-        </button>
-      </div>
-    </div>
-  </div>
-);
-
-// ✅ FIXED PAGE 3 - NO FREE PLAN, AMANDA AS $50 STUDIO PRO OWNER
-const Page3 = ({ onBack, onNext }) => {
-  const [view, setView] = useState('signin');
-  return (
-  <div className="w-full h-full bg-black text-white p-8 overflow-y-auto">
-    <div className="max-w-4xl mx-auto">
-
-      {/* AMANDA STRONG - STUDIO PLAN OWNER */}
-      <div className="bg-gradient-to-br from-gray-900 to-black p-8 rounded-2xl border-2 border-lime-400 mb-10 text-center shadow-xl">
-        <h2 className="text-4xl font-black mb-2 text-lime-400">AMANDA STRONG</h2>
-        <p className="text-xl text-white font-bold">Studio Plan</p>
-      </div>
-
-      {/* SIGN IN / CREATE ACCOUNT */}
-      <div className="bg-gradient-to-br from-gray-900 to-black rounded-2xl border-2 border-gray-700 p-8 mb-10 shadow-xl">
-        <div className="flex gap-4 mb-6">
-          <button onClick={() => setView('signin')} className={`flex-1 py-3 rounded-lg font-bold transition-all ${view === 'signin' ? 'bg-lime-400 text-black' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}>
-            Sign In
-          </button>
-          <button onClick={() => setView('signup')} className={`flex-1 py-3 rounded-lg font-bold transition-all ${view === 'signup' ? 'bg-lime-400 text-black' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'}`}>
-            Create Account
-          </button>
-        </div>
-
-        {view === 'signin' && (
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">Email Address</label>
-            <input type="email" placeholder="Email Address" className="w-full p-3 mb-4 bg-gray-800 rounded-lg text-white placeholder-gray-500 border border-gray-700 focus:border-lime-400 focus:outline-none" />
-            <label className="block text-sm text-gray-400 mb-1">Password</label>
-            <input type="password" placeholder="Password" className="w-full p-3 mb-6 bg-gray-800 rounded-lg text-white placeholder-gray-500 border border-gray-700 focus:border-lime-400 focus:outline-none" />
-            <button className="w-full py-3 bg-lime-400 text-black font-bold rounded-lg hover:bg-lime-300 transition-all">Sign In</button>
-          </div>
-        )}
-
-        {view === 'signup' && (
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">Full Name</label>
-            <input type="text" placeholder="Full Name" className="w-full p-3 mb-4 bg-gray-800 rounded-lg text-white placeholder-gray-500 border border-gray-700 focus:border-lime-400 focus:outline-none" />
-            <label className="block text-sm text-gray-400 mb-1">Email Address</label>
-            <input type="email" placeholder="Email Address" className="w-full p-3 mb-4 bg-gray-800 rounded-lg text-white placeholder-gray-500 border border-gray-700 focus:border-lime-400 focus:outline-none" />
-            <label className="block text-sm text-gray-400 mb-1">Password</label>
-            <input type="password" placeholder="Password" className="w-full p-3 mb-6 bg-gray-800 rounded-lg text-white placeholder-gray-500 border border-gray-700 focus:border-lime-400 focus:outline-none" />
-            <button className="w-full py-3 bg-lime-400 text-black font-bold rounded-lg hover:bg-lime-300 transition-all">Create Account</button>
-          </div>
-        )}
-
-        <p className="text-center text-gray-500 mt-6 text-sm">or</p>
-        <p className="text-center text-gray-400 text-sm mt-1">Explore features without creating an account</p>
-      </div>
-
-      {/* CHOOSE YOUR PLAN */}
-      <h2 className="text-4xl font-bold text-center mb-2 text-lime-400">Choose Your Plan</h2>
-      <p className="text-center text-gray-400 mb-8">Pick the plan that works for you</p>
-
-      <div className="grid grid-cols-3 gap-6 mb-8">
-
-        {/* BASIC $20 */}
-        <div className="bg-gradient-to-br from-gray-900 to-black p-8 rounded-2xl border-2 border-gray-700 hover:border-lime-400 transition-all duration-300 shadow-xl hover:scale-105">
-          <h3 className="text-2xl font-bold mb-3 text-white">Basic</h3>
-          <p className="text-4xl font-black text-lime-400 mb-4">$20<span className="text-base">/month</span></p>
-          <ul className="space-y-2 text-sm text-gray-300 mb-6">
-            <li className="flex items-center"><span className="text-lime-400 mr-2">✓</span> HD Export</li>
-            <li className="flex items-center"><span className="text-lime-400 mr-2">✓</span> 100 AI Tools</li>
-            <li className="flex items-center"><span className="text-lime-400 mr-2">✓</span> Basic Templates</li>
-            <li className="flex items-center"><span className="text-lime-400 mr-2">✓</span> 10GB Storage</li>
-            <li className="flex items-center"><span className="text-lime-400 mr-2">✓</span> Email Support</li>
-          </ul>
-          <button className="w-full py-3 bg-lime-400 text-black font-bold rounded-lg hover:bg-lime-300 transition-all">Subscribe</button>
-        </div>
-
-        {/* PRO $30 - MOST POPULAR */}
-        <div className="bg-gradient-to-br from-lime-900 to-black p-8 rounded-2xl border-4 border-lime-400 shadow-2xl hover:shadow-lime-400/50 transition-all duration-300 transform scale-105">
-          <div className="text-center mb-3">
-            <span className="bg-lime-400 text-black px-4 py-1 rounded-full text-sm font-bold">Most Popular</span>
-          </div>
-          <h3 className="text-2xl font-bold mb-3 text-white">Pro</h3>
-          <p className="text-4xl font-black text-lime-400 mb-4">$30<span className="text-base">/month</span></p>
-          <ul className="space-y-2 text-sm text-gray-300 mb-6">
-            <li className="flex items-center"><span className="text-lime-400 mr-2">✓</span> 4K Export</li>
-            <li className="flex items-center"><span className="text-lime-400 mr-2">✓</span> 300 AI Tools</li>
-            <li className="flex items-center"><span className="text-lime-400 mr-2">✓</span> Premium Templates</li>
-            <li className="flex items-center"><span className="text-lime-400 mr-2">✓</span> 100GB Storage</li>
-            <li className="flex items-center"><span className="text-lime-400 mr-2">✓</span> Priority Support</li>
-            <li className="flex items-center"><span className="text-lime-400 mr-2">✓</span> Commercial License</li>
-          </ul>
-          <button className="w-full py-3 bg-lime-400 text-black font-bold rounded-lg hover:bg-lime-300 transition-all">Subscribe</button>
-        </div>
-
-        {/* STUDIO $50 - AMANDA'S PLAN - SELECTED */}
-        <div className="bg-gradient-to-br from-gray-900 to-black p-8 rounded-2xl border-4 border-lime-400 shadow-xl transition-all duration-300">
-          <div className="text-center mb-3">
-            <span className="bg-lime-400 text-black px-4 py-1 rounded-full text-sm font-bold">Selected</span>
-          </div>
-          <h3 className="text-2xl font-bold mb-3 text-white">Studio</h3>
-          <p className="text-4xl font-black text-lime-400 mb-4">$50<span className="text-base">/month</span></p>
-          <ul className="space-y-2 text-sm text-gray-300 mb-6">
-            <li className="flex items-center"><span className="text-lime-400 mr-2">✓</span> 8K Export</li>
-            <li className="flex items-center"><span className="text-lime-400 mr-2">✓</span> All 600 AI Tools</li>
-            <li className="flex items-center"><span className="text-lime-400 mr-2">✓</span> Unlimited Templates</li>
-            <li className="flex items-center"><span className="text-lime-400 mr-2">✓</span> 1TB Storage</li>
-            <li className="flex items-center"><span className="text-lime-400 mr-2">✓</span> 24/7 Live Support</li>
-            <li className="flex items-center"><span className="text-lime-400 mr-2">✓</span> Full Commercial Rights</li>
-            <li className="flex items-center"><span className="text-lime-400 mr-2">✓</span> Team Collaboration</li>
-          </ul>
-          <button className="w-full py-3 bg-lime-400 text-black font-bold rounded-lg cursor-default">Selected</button>
-        </div>
-
-      </div>
-
-      <p className="text-center text-gray-500 text-sm mb-2">Secure payment processing with Stripe</p>
-      <p className="text-center text-gray-500 text-sm mb-10">Contact admin to upgrade your subscription tier</p>
-
-      <div className="flex gap-6 justify-center">
-        <button onClick={onBack} className="px-12 py-4 bg-gray-700 text-white font-bold rounded-lg hover:bg-gray-600 transition-all duration-300 flex items-center gap-2">
-          <ChevronLeft />Back
-        </button>
-        <button onClick={onNext} className="px-12 py-4 bg-lime-400 text-black font-bold rounded-lg hover:bg-lime-300 transition-all duration-300 flex items-center gap-2">
-          Next<ChevronRight />
-        </button>
-      </div>
-
-      <footer className="text-center mt-16 text-sm text-gray-500">
-        MandaStrong Studio 2025 • Author of Doxy The School Bully • MandaStrong1.Etsy.com
-      </footer>
-    </div>
-  </div>
-  );
-};
-
-const EditorsChoicePage = ({ onBack, onNext }) => (
-  <div className="w-full h-full bg-black text-white p-8 overflow-y-auto">
-    <div className="max-w-7xl mx-auto">
-      <h1 className="text-5xl font-bold text-center mb-4 text-lime-400">Editor's Choice</h1>
-      <p className="text-center text-gray-400 mb-12 text-lg">Showcase your masterpiece or browse community highlights</p>
-
-      {/* Upload Portal */}
-      <div className="bg-gradient-to-br from-gray-900 to-black p-10 rounded-2xl border-2 border-lime-400 mb-12 text-center shadow-xl">
-        <h2 className="text-3xl font-bold text-lime-400 mb-3">Upload Your Movie</h2>
-        <p className="text-gray-400 mb-6 text-lg">Share your creation with the world – up to 180 min supported</p>
-        
-        <div className="border-4 border-dashed border-lime-400 rounded-xl p-12 mb-4 hover:bg-gray-800/50 transition-all cursor-pointer"
-             onDragOver={(e) => e.preventDefault()}
-             onDrop={(e) => { e.preventDefault(); alert('File upload ready!'); }}>
-          <Upload className="mx-auto mb-4 text-lime-400" size={48} />
-          <p className="text-gray-300 mb-2">Drag & drop your movie here</p>
-          <p className="text-gray-500 text-sm">or click to browse</p>
-        </div>
-        
-        <input type="file" accept="video/*" className="hidden" id="movie-upload" />
-        <label htmlFor="movie-upload" className="px-12 py-5 bg-lime-400 text-black font-bold rounded-lg hover:bg-lime-300 transition-all duration-300 inline-flex items-center gap-3 text-xl shadow-lg hover:shadow-lime-400/50 cursor-pointer">
-          <Upload /> Browse Files
-        </label>
-      </div>
-
-      {/* Featured Films Grid */}
-      <h2 className="text-4xl font-bold text-lime-400 mb-8">Featured Films</h2>
-      <div className="grid grid-cols-3 gap-8 mb-12">
-        {[
-          { title: 'Dreams of Tomorrow', dur: '1h 45m', rating: '⭐ 4.9' },
-          { title: 'Ocean Depths', dur: '2h 10m', rating: '⭐ 4.7' },
-          { title: 'City Nights', dur: '1h 30m', rating: '⭐ 4.8' },
-          { title: 'Mountain Echo', dur: '2h 05m', rating: '⭐ 4.6' },
-          { title: 'Silent Sky', dur: '1h 55m', rating: '⭐ 4.9' },
-          { title: 'Golden Hour', dur: '1h 20m', rating: '⭐ 4.5' },
-        ].map((movie, i) => (
-          <div key={i} className="bg-gradient-to-br from-gray-900 to-black rounded-xl overflow-hidden border-2 border-gray-700 hover:border-lime-400 transition-all duration-300 hover:scale-105 shadow-xl">
-            <div className="bg-gray-800 h-56 flex items-center justify-center border-b-2 border-gray-700">
-              <Play className="w-16 h-16 text-lime-400 cursor-pointer hover:scale-110 transition-transform" />
-            </div>
-            <div className="p-6">
-              <h3 className="font-bold text-xl mb-2">{movie.title}</h3>
-              <div className="flex justify-between text-sm text-gray-400">
-                <span>{movie.dur}</span>
-                <span>{movie.rating}</span>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="flex gap-6 justify-center">
-        <button onClick={onBack} className="px-12 py-4 bg-gray-700 text-white font-bold rounded-lg hover:bg-gray-600 transition-all duration-300 flex items-center gap-2">
-          <ChevronLeft />Back
-        </button>
-        <button onClick={onNext} className="px-12 py-4 bg-lime-400 text-black font-bold rounded-lg hover:bg-lime-300 transition-all duration-300 flex items-center gap-2">
-          Next<ChevronRight />
-        </button>
-      </div>
-
-      <footer className="text-center mt-16 text-sm text-gray-500">
-        MandaStrong Studio 2025 • Author of Doxy The School Bully • MandaStrong1.Etsy.com
-      </footer>
-    </div>
-  </div>
-);
-
-const ToolBoardPage = ({ pageNum, tools, onBack, onNext, onToolClick }) => (
-  <div className="w-full h-full bg-black text-white overflow-y-auto">
-    <div className="p-8">
-      <h1 className="text-5xl font-bold text-center mb-4 text-lime-400">
-        Professional AI Tools - Page {pageNum - 3} of 5
-      </h1>
-      <p className="text-center text-gray-400 mb-12 text-lg">Click any tool to access its interface</p>
-      
-      <div className="grid grid-cols-4 gap-6 max-w-7xl mx-auto mb-12">
-        {tools.map((tool, index) => (
-          <button
-            key={index}
-            onClick={() => onToolClick(tool)}
-            className="bg-gradient-to-br from-lime-400 to-lime-500 text-black font-bold p-8 rounded-xl hover:from-lime-300 hover:to-lime-400 transition-all duration-300 transform hover:scale-105 min-h-[120px] flex items-center justify-center text-center shadow-lg hover:shadow-lime-400/50 border-2 border-lime-300"
-          >
-            <span className="text-sm leading-tight">{tool}</span>
-          </button>
-        ))}
-      </div>
-
-      <div className="flex gap-6 justify-center mt-12">
-        <button onClick={onBack} className="px-12 py-4 bg-gray-700 text-white font-bold rounded-lg hover:bg-gray-600 transition-all duration-300 flex items-center gap-2">
-          <ChevronLeft />Back
-        </button>
-        <button onClick={onNext} className="px-12 py-4 bg-lime-400 text-black font-bold rounded-lg hover:bg-lime-300 transition-all duration-300 flex items-center gap-2">
-          Next<ChevronRight />
-        </button>
-      </div>
-
-      <footer className="text-center mt-16 text-sm text-gray-500">
-        MandaStrong Studio 2025 • Author of Doxy The School Bully • MandaStrong1.Etsy.com
-      </footer>
-    </div>
-  </div>
-);
-
-const EditorPage = ({ pageNum, onBack, onNext }) => {
-  const [dragActive, setDragActive] = useState(false);
-  const fileInputRef = useRef(null);
-
-  const handleDrag = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
-    }
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      // Handle files
-      console.log("Files dropped:", e.dataTransfer.files);
-    }
-  };
-
-  const handleFileSelect = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      console.log("Files selected:", e.target.files);
-    }
-  };
-
-  return (
-  <div className="w-full h-full bg-black text-white flex">
-    <div 
-      className={`w-1/3 border-r border-gray-700 p-6 overflow-y-auto bg-gradient-to-b from-gray-900 to-black ${
-        dragActive ? 'bg-lime-400/10 border-lime-400' : ''
-      }`}
-      onDragEnter={handleDrag}
-      onDragLeave={handleDrag}
-      onDragOver={handleDrag}
-      onDrop={handleDrop}
-    >
-      <h2 className="text-3xl font-bold mb-6 text-lime-400">Media Library</h2>
-      <input 
-        ref={fileInputRef}
-        type="file"
-        multiple
-        accept="video/*,audio/*,image/*"
-        onChange={handleFileSelect}
-        className="hidden"
-      />
-      <button 
-        onClick={() => fileInputRef.current?.click()}
-        className="w-full py-4 bg-lime-400 text-black font-bold rounded-lg mb-6 hover:bg-lime-300 transition-all duration-300 flex items-center justify-center gap-2"
-      >
-        <Upload />Upload Media (Click or Drag & Drop)
-      </button>
-      {dragActive && (
-        <div className="text-center text-lime-400 font-bold mb-4 animate-pulse">
-          Drop files here to upload
-        </div>
-      )}
-      <div className="space-y-3">
-        <div className="bg-gray-800 p-4 rounded-lg hover:bg-gray-700 transition-all cursor-pointer border border-gray-700 hover:border-lime-400">
-          <div className="flex items-center gap-3">
-            <Film className="text-lime-400" />
-            <span>Video_clip_001.mp4</span>
-          </div>
-        </div>
-        <div className="bg-gray-800 p-4 rounded-lg hover:bg-gray-700 transition-all cursor-pointer border border-gray-700 hover:border-lime-400">
-          <div className="flex items-center gap-3">
-            <Volume2 className="text-lime-400" />
-            <span>Audio_track_002.mp3</span>
-          </div>
-        </div>
-        <div className="bg-gray-800 p-4 rounded-lg hover:bg-gray-700 transition-all cursor-pointer border border-gray-700 hover:border-lime-400">
-          <div className="flex items-center gap-3">
-            <Film className="text-lime-400" />
-            <span>Image_background_003.jpg</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div className="flex-1 flex flex-col p-6">
-      <div className="bg-gradient-to-br from-gray-900 to-black rounded-xl mb-6 flex items-center justify-center h-2/3 border-2 border-gray-700 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-lime-400/5 to-transparent"></div>
-        <div className="text-gray-600 text-2xl z-10">Video Preview Window</div>
-      </div>
-
-      <div className="grid grid-cols-4 gap-4 mb-6">
-        <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
-          <label className="block text-sm mb-2 text-lime-400 font-bold">Ratio</label>
-          <select className="w-full bg-gray-900 p-3 rounded-lg text-white border border-gray-600 focus:border-lime-400 focus:outline-none">
-            <option>16:9</option>
-            <option>4:3</option>
-            <option>1:1</option>
-            <option>9:16</option>
-          </select>
-        </div>
-        <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
-          <label className="block text-sm mb-2 text-lime-400 font-bold">Speed</label>
-          <input type="range" min="0.25" max="4" step="0.25" defaultValue="1" className="w-full accent-lime-400" />
-          <div className="text-xs text-center mt-1 text-gray-400">1x</div>
-        </div>
-        <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
-          <label className="block text-sm mb-2 text-lime-400 font-bold">Volume</label>
-          <input type="range" min="0" max="100" defaultValue="100" className="w-full accent-lime-400" />
-          <div className="text-xs text-center mt-1 text-gray-400">100%</div>
-        </div>
-        <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
-          <label className="block text-sm mb-2 text-lime-400 font-bold">Duration (max 150min)</label>
-          <input type="number" max="150" defaultValue="120" className="w-full bg-gray-900 p-3 rounded-lg text-white border border-gray-600 focus:border-lime-400 focus:outline-none" />
-        </div>
-      </div>
-
-      <div className="bg-gradient-to-br from-gray-900 to-black rounded-xl p-6 flex-1 border-2 border-gray-700">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-bold text-lime-400">Timeline - DaVinci Style</h3>
-          <button className="px-6 py-2 bg-lime-400 text-black font-bold rounded-lg text-sm hover:bg-lime-300 transition-all duration-300 flex items-center gap-2">
-            <Plus size={16} />Add Track
-          </button>
-        </div>
-        <div className="space-y-3">
-          <div className="bg-gray-800 rounded-lg p-3 flex items-center border border-gray-600 hover:border-lime-400 transition-all">
-            <span className="text-sm mr-4 w-20 text-lime-400 font-bold">Video 1</span>
-            <div className="flex-1 bg-gradient-to-r from-lime-400 to-lime-500 h-10 rounded-lg shadow-lg"></div>
-          </div>
-          <div className="bg-gray-800 rounded-lg p-3 flex items-center border border-gray-600 hover:border-lime-400 transition-all">
-            <span className="text-sm mr-4 w-20 text-blue-400 font-bold">Audio 1</span>
-            <div className="flex-1 bg-gradient-to-r from-blue-400 to-blue-500 h-10 rounded-lg shadow-lg"></div>
-          </div>
-          <div className="bg-gray-800 rounded-lg p-3 flex items-center border border-gray-600 hover:border-lime-400 transition-all">
-            <span className="text-sm mr-4 w-20 text-yellow-400 font-bold">Subtitles</span>
-            <div className="flex-1 bg-gradient-to-r from-yellow-400 to-yellow-500 h-10 rounded-lg shadow-lg"></div>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex gap-6 justify-center mt-6">
-        <button onClick={onBack} className="px-12 py-4 bg-gray-700 text-white font-bold rounded-lg hover:bg-gray-600 transition-all duration-300 flex items-center gap-2">
-          <ChevronLeft />Back
-        </button>
-        <button onClick={onNext} className="px-12 py-4 bg-lime-400 text-black font-bold rounded-lg hover:bg-lime-300 transition-all duration-300 flex items-center gap-2">
-          Next<ChevronRight />
-        </button>
-      </div>
-    </div>
-  </div>
-  );
-};
-
-const FinalEditorPage = ({ onBack, onNext }) => {
-  const [showEnhancementStudio, setShowEnhancementStudio] = useState(false);
-  const [duration, setDuration] = useState(90);
-  const [isRendering, setIsRendering] = useState(false);
-  const [renderProgress, setRenderProgress] = useState(0);
-
-  const handleRender = () => {
-    setIsRendering(true);
-    setRenderProgress(0);
-    const interval = setInterval(() => {
-      setRenderProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setIsRendering(false);
-          return 100;
-        }
-        return prev + 10;
-      });
-    }, 500);
-  };
-
-  if (showEnhancementStudio) {
     return (
-      <div className="w-full h-full bg-black text-white p-6 overflow-y-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-4xl font-bold text-lime-400">AI Enhancement Studio</h1>
-          <button onClick={() => setShowEnhancementStudio(false)} className="px-6 py-3 bg-gray-700 text-white font-bold rounded-lg hover:bg-gray-600 transition-all">
-            Close Studio
-          </button>
-        </div>
-
-        {/* Duration Slider */}
-        <div className="bg-gray-800 border-2 border-lime-400 rounded-xl p-6 mb-6">
-          <h3 className="text-xl font-bold text-lime-400 mb-4">Project Duration</h3>
-          <div className="flex items-center gap-6">
-            <input 
-              type="range" 
-              min="0" 
-              max="180" 
-              value={duration}
-              onChange={(e) => setDuration(e.target.value)}
-              className="flex-1 accent-lime-400"
-            />
-            <div className="text-2xl font-black text-lime-400 w-32 text-right">{duration} min</div>
+      <div className="fixed top-8 right-6 z-50">
+        <button onClick={() => setMenuOpen(!menuOpen)} className="bg-purple-600 hover:bg-purple-500 px-6 py-3 rounded-full font-black uppercase text-white flex items-center gap-2 shadow-lg transition-all">
+          <Menu size={20} /> Quick Access
+        </button>
+        {menuOpen && (
+          <div className="absolute top-16 right-0 bg-black border-2 border-purple-600 rounded-2xl p-4 w-72 shadow-2xl">
+            <div className="flex items-center justify-between mb-3">
+              <button
+                onClick={() => setMenuPageIndex(Math.max(0, menuPageIndex - 1))}
+                disabled={menuPageIndex === 0}
+                className="p-1 hover:bg-purple-600 rounded disabled:opacity-30 disabled:hover:bg-transparent"
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <span className="text-xs text-gray-400">
+                {menuPageIndex + 1} / {totalMenuPages}
+              </span>
+              <button
+                onClick={() => setMenuPageIndex(Math.min(totalMenuPages - 1, menuPageIndex + 1))}
+                disabled={menuPageIndex === totalMenuPages - 1}
+                className="p-1 hover:bg-purple-600 rounded disabled:opacity-30 disabled:hover:bg-transparent"
+              >
+                <ChevronRight size={20} />
+              </button>
+            </div>
+            <div className="flex flex-col gap-2">
+              {displayedPages.map((item) => (
+                <button key={item.page} onClick={() => goTo(item.page)} className="text-left text-xs font-bold text-purple-400 px-4 py-2 hover:bg-purple-600 hover:text-white rounded-lg transition">
+                  {item.label}
+                </button>
+              ))}
+            </div>
+            {user && (
+              <button onClick={handleLogout} className="text-left text-xs font-bold text-red-400 px-4 py-2 hover:bg-red-600 hover:text-white rounded-lg transition flex items-center gap-2 mt-3 w-full">
+                <LogOut size={16} /> Logout
+              </button>
+            )}
           </div>
-          <div className="flex justify-between text-sm text-gray-400 mt-2">
-            <span>0 min</span>
-            <span>90 min</span>
-            <span>180 min (3 hours)</span>
-          </div>
-        </div>
-
-        {/* Enhancement Tools Grid */}
-        <h2 className="text-2xl font-bold text-lime-400 mb-4">Professional Enhancement Tools</h2>
-        <div className="grid grid-cols-4 gap-4 mb-6">
-          {[
-            "Neural Upscale 8K", "Cinematic Color Grade", "HDR Enhancement", "Noise Reduction Pro",
-            "Frame Interpolation", "Motion Blur Control", "Sharpness AI", "Contrast Optimizer",
-            "Lighting Synthesis", "Shadow Recovery", "Highlight Control", "White Balance AI",
-            "Skin Tone Perfection", "Color Harmony", "Film Grain", "Vintage Filter",
-            "Slow Motion Pro", "Speed Ramping", "Stabilization AI", "Lens Correction",
-            "Chromatic Fix", "Vignette Control", "Glow Effects", "Lens Flare AI",
-            "Bokeh Enhancement", "Depth of Field", "Focus Puller", "Tracking AI",
-            "Green Screen Pro", "Object Removal", "Sky Replacement", "Weather FX",
-            "Particle Effects", "Light Leaks", "Transitions AI", "Text Animation",
-            "Logo Placement", "Watermark Removal", "Audio Sync", "Voice Enhancement"
-          ].map((tool, i) => (
-            <button key={i} className="bg-gradient-to-br from-gray-900 to-black p-4 rounded-lg border-2 border-lime-400 hover:border-lime-300 hover:scale-105 transition-all font-bold text-sm text-white hover:bg-gray-800">
-              {tool}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex gap-6 justify-center">
-          <button onClick={() => setShowEnhancementStudio(false)} className="px-12 py-4 bg-gray-700 text-white font-bold rounded-lg hover:bg-gray-600 transition-all">
-            Back to Editor
-          </button>
-          <button className="px-12 py-4 bg-lime-400 text-black font-bold rounded-lg hover:bg-lime-300 transition-all">
-            Apply Enhancements
-          </button>
-        </div>
+        )}
       </div>
     );
-  }
+  };
+
+  const HelpButton = () => (
+    <button onClick={() => setPage(19)} className="fixed bottom-8 right-8 z-50 bg-purple-600 hover:bg-purple-500 p-4 rounded-full shadow-lg transition-all">
+      <MessageCircle size={28} className="text-white" />
+    </button>
+  );
+
+  const Footer = () => page >= 3 ? (
+    <div className="fixed bottom-0 left-0 right-0 bg-black/90 py-3 text-center text-white text-xs md:text-sm font-black uppercase z-40 border-t border-purple-900/30">
+      <p>MandaStrong1 2025 ~ Author of Doxy The School Bully ~ Also Find Me On MandaStrong1.Etsy.com</p>
+    </div>
+  ) : null;
+
+  const Navigation = () => (
+    <div className="fixed bottom-20 right-6 z-50 flex flex-col gap-3">
+      {page > 1 && page < 21 && (
+        <button onClick={() => setPage(page - 1)} className="bg-purple-600 hover:bg-purple-500 px-6 py-3 rounded-full font-black uppercase text-white shadow-lg transition-all">
+          ← Back
+        </button>
+      )}
+      {page < 21 && (
+        <button onClick={() => setPage(page + 1)} className="bg-purple-600 hover:bg-purple-500 px-6 py-3 rounded-full font-black uppercase text-white shadow-lg transition-all">
+          Next →
+        </button>
+      )}
+      {page === 21 && (
+        <>
+          <button onClick={() => setPage(1)} className="bg-purple-600 hover:bg-purple-500 px-6 py-3 rounded-full font-black uppercase text-white shadow-lg transition-all">
+            Home
+          </button>
+          <button className="bg-black hover:bg-gray-900 px-6 py-3 rounded-full font-black uppercase text-white shadow-lg transition-all border-2 border-white/20">
+            Close
+          </button>
+        </>
+      )}
+    </div>
+  );
+
+  const ToolBoard = ({ title, tools }: { title: string; tools: string[] }) => (
+    <div className="min-h-screen bg-black text-white p-6 pb-32">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-5xl font-black uppercase text-purple-500 mb-12 text-left">{title} BOARD</h1>
+        <div className="grid grid-cols-2 gap-4">
+          {tools.map((tool, i) => (
+            <div key={i} className="bg-gray-900/50 border-2 border-purple-900/30 rounded-xl p-4 flex items-center gap-3 hover:border-purple-600 hover:bg-gray-900 transition-all cursor-pointer">
+              <Sparkles size={20} className="text-purple-500 flex-shrink-0" />
+              <span className="font-bold text-sm">{tool}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 
   return (
-  <div className="w-full h-full bg-black text-white flex flex-col p-6">
-    <div className="flex items-center justify-between mb-6">
-      <h1 className="text-4xl font-bold text-lime-400">Final Editor & Export</h1>
-      <button onClick={() => setShowEnhancementStudio(true)} className="px-8 py-3 bg-lime-400 text-black font-bold rounded-lg hover:bg-lime-300 transition-all duration-300 flex items-center gap-2">
-        <Sparkles />Open Enhancement Studio
-      </button>
-    </div>
-    
-    <div className="flex flex-1 gap-6">
-      <div className="flex-1 bg-gradient-to-br from-gray-900 to-black rounded-xl flex items-center justify-center border-2 border-gray-700 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-lime-400/5 to-transparent"></div>
-        <div className="text-gray-600 text-2xl z-10">Final Video Preview</div>
-      </div>
+    <div className="min-h-screen bg-black text-white overflow-x-hidden">
+      <QuickAccessMenu />
+      <HelpButton />
+      <Footer />
+      <Navigation />
 
-      <div className="w-1/3 space-y-4">
-        <button className="w-full py-4 bg-lime-400 text-black font-bold rounded-lg hover:bg-lime-300 transition-all duration-300 flex items-center justify-center gap-2">
-          <Eye />Preview
-        </button>
-        
-        {/* Render Button with Progress */}
-        <button 
-          onClick={handleRender}
-          disabled={isRendering}
-          className={`w-full py-4 font-bold rounded-lg transition-all duration-300 flex items-center justify-center gap-2 ${
-            isRendering ? 'bg-yellow-500 cursor-not-allowed' : 'bg-lime-400 text-black hover:bg-lime-300'
-          }`}
-        >
-          {isRendering ? (
-            <>
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black"></div>
-              Rendering... {renderProgress}%
-            </>
-          ) : renderProgress === 100 ? (
-            <>
-              <Zap />Render Complete!
-            </>
-          ) : (
-            <>
-              <Zap />Generate Final Video
-            </>
-          )}
-        </button>
-        
-        {isRendering && (
-          <div className="w-full bg-gray-700 rounded-full h-3 overflow-hidden">
-            <div 
-              className="bg-lime-400 h-full transition-all duration-500 rounded-full"
-              style={{ width: `${renderProgress}%` }}
-            ></div>
+      {page === 1 && (
+        <div className="relative h-screen overflow-hidden">
+          <video ref={videoRef} className="absolute inset-0 w-full h-full object-cover" src="background__2_.mp4" loop muted playsInline />
+          <div className="relative z-10 h-full flex flex-col justify-between items-center text-center px-4 py-8">
+            <div className="mt-8">
+              <h1 className="text-6xl md:text-8xl font-black text-black uppercase italic tracking-tighter leading-none drop-shadow-lg">
+                MANDASTRONG'S STUDIO
+              </h1>
+              <p className="text-xl md:text-3xl font-black text-black italic uppercase mt-2 drop-shadow-lg">
+                Welcome To The All-In-One Make-A-Movie App! ~ Up To 3 Hours
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-4 mb-8 justify-center">
+              {!user ? (
+                <>
+                  <button onClick={() => setPage(2)} className="bg-black border border-white/20 px-10 py-3 rounded-xl text-xl font-black text-white hover:bg-gray-900 transition shadow-2xl">Next</button>
+                  <button onClick={() => setPage(3)} className="bg-black border border-white/20 px-10 py-3 rounded-xl text-xl font-black text-white hover:bg-gray-900 transition shadow-2xl">Login</button>
+                  <button onClick={() => setPage(3)} className="bg-black border border-white/20 px-10 py-3 rounded-xl text-xl font-black text-white hover:bg-gray-900 transition shadow-2xl">Register</button>
+                  <button onClick={() => setPage(4)} className="bg-gray-800 border border-white/20 px-10 py-3 rounded-xl text-xl font-black text-white hover:bg-gray-700 transition shadow-2xl">Browse For Now</button>
+                </>
+              ) : (
+                <>
+                  <button onClick={() => setPage(4)} className="bg-purple-600 border border-white/20 px-10 py-3 rounded-xl text-xl font-black text-white hover:bg-purple-500 transition shadow-2xl">
+                    <Sparkles size={20} className="inline mr-2" /> Start Creating
+                  </button>
+                  <button onClick={() => setPage(12)} className="bg-black border border-white/20 px-10 py-3 rounded-xl text-xl font-black text-white hover:bg-gray-900 transition shadow-2xl">
+                    <Folder size={20} className="inline mr-2" /> My Projects
+                  </button>
+                </>
+              )}
+            </div>
           </div>
-        )}
-        
-        <button className="w-full py-4 bg-blue-500 text-white font-bold rounded-lg hover:bg-blue-400 transition-all duration-300 flex items-center justify-center gap-2">
-          <Save />Save Project
-        </button>
-        <button className="w-full py-4 bg-green-500 text-white font-bold rounded-lg hover:bg-green-400 transition-all duration-300 flex items-center justify-center gap-2">
-          <Download />Download
-        </button>
-        <button className="w-full py-4 bg-purple-500 text-white font-bold rounded-lg hover:bg-purple-400 transition-all duration-300 flex items-center justify-center gap-2">
-          <Share2 />Share
-        </button>
-        
-        <div className="bg-gray-800 p-6 rounded-xl border-2 border-lime-400">
-          <h3 className="font-bold mb-4 text-lime-400 text-lg">Export To:</h3>
-          <select className="w-full bg-gray-900 p-3 rounded-lg mb-4 text-white border border-gray-600 focus:border-lime-400 focus:outline-none">
-            <option>YouTube</option>
-            <option>Vimeo</option>
-            <option>Instagram</option>
-            <option>TikTok</option>
-            <option>Facebook</option>
-            <option>Twitter</option>
-            <option>Local File</option>
-          </select>
-          <button className="w-full py-3 bg-red-500 text-white font-bold rounded-lg hover:bg-red-400 transition-all duration-300">
-            Export Now
+        </div>
+      )}
+
+      {page === 2 && (
+        <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-purple-900 flex flex-col items-center justify-center text-center px-4">
+          <Sparkles size={80} className="text-purple-400 mb-8" />
+          <h1 className="text-6xl md:text-8xl font-black uppercase text-white mb-6">MANDASTRONG'S<br/>STUDIO</h1>
+          <p className="text-3xl md:text-5xl font-black text-purple-300 mb-4">Make Amazing Family Movies</p>
+          <p className="text-3xl md:text-5xl font-black text-purple-300">& Bring Dreams To Life!</p>
+        </div>
+      )}
+
+      {page === 3 && (
+        <div className="min-h-screen bg-black p-8 pb-32 overflow-y-auto">
+          {authError && (
+            <div className="max-w-lg mx-auto mb-4 bg-red-900/50 border-2 border-red-600 rounded-xl p-4 text-center">
+              <p className="text-red-300 font-bold">{authError}</p>
+            </div>
+          )}
+          {authSuccess && (
+            <div className="max-w-lg mx-auto mb-4 bg-green-900/50 border-2 border-green-600 rounded-xl p-4 text-center">
+              <p className="text-green-300 font-bold">{authSuccess}</p>
+            </div>
+          )}
+
+          <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-8 mb-16">
+            <div className="bg-gradient-to-br from-purple-900/50 to-purple-800/30 border-2 border-purple-600 rounded-3xl p-8">
+              <h2 className="text-5xl font-black mb-8 text-center">Login</h2>
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-bold mb-2">Email</label>
+                  <input
+                    type="email"
+                    placeholder="your@email.com"
+                    value={loginEmail}
+                    onChange={(e) => setLoginEmail(e.target.value)}
+                    className="w-full bg-transparent border-2 border-purple-600 rounded-xl px-4 py-3 text-white placeholder-gray-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold mb-2">Password</label>
+                  <input
+                    type="password"
+                    placeholder="••••••••"
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    className="w-full bg-transparent border-2 border-purple-600 rounded-xl px-4 py-3 text-white placeholder-gray-500"
+                    required
+                  />
+                </div>
+                <button type="submit" className="w-full bg-purple-600 hover:bg-purple-500 py-4 rounded-xl font-black text-xl mt-6">Login</button>
+              </form>
+            </div>
+
+            <div className="bg-gradient-to-br from-purple-900/50 to-purple-800/30 border-2 border-purple-600 rounded-3xl p-8">
+              <h2 className="text-5xl font-black mb-8 text-center">Register</h2>
+              <form onSubmit={handleRegister} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-bold mb-2">Name</label>
+                  <input
+                    type="text"
+                    placeholder="Your Name"
+                    value={registerName}
+                    onChange={(e) => setRegisterName(e.target.value)}
+                    className="w-full bg-transparent border-2 border-purple-600 rounded-xl px-4 py-3 text-white placeholder-gray-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold mb-2">Email</label>
+                  <input
+                    type="email"
+                    placeholder="your@email.com"
+                    value={registerEmail}
+                    onChange={(e) => setRegisterEmail(e.target.value)}
+                    className="w-full bg-transparent border-2 border-purple-600 rounded-xl px-4 py-3 text-white placeholder-gray-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold mb-2">Password</label>
+                  <input
+                    type="password"
+                    placeholder="••••••••"
+                    value={registerPassword}
+                    onChange={(e) => setRegisterPassword(e.target.value)}
+                    className="w-full bg-transparent border-2 border-purple-600 rounded-xl px-4 py-3 text-white placeholder-gray-500"
+                    required
+                  />
+                </div>
+                <button type="submit" className="w-full bg-purple-600 hover:bg-purple-500 py-4 rounded-xl font-black text-xl mt-6">Create Account</button>
+              </form>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4 max-w-lg mx-auto mb-8">
+            <div className="flex-1 h-px bg-gray-700"></div>
+            <span className="text-gray-400 font-bold">or</span>
+            <div className="flex-1 h-px bg-gray-700"></div>
+          </div>
+
+          <div className="max-w-lg mx-auto mb-16">
+            <button onClick={() => setPage(4)} className="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-xl font-black text-xl flex items-center justify-center gap-2">
+              <Eye size={24} /> Browse as Guest (View Only)
+            </button>
+            <p className="text-center text-gray-400 text-sm mt-4">Explore the platform without an account</p>
+          </div>
+
+          <div className="max-w-7xl mx-auto">
+            <h2 className="text-5xl font-black text-center mb-10">Select Your Plan</h2>
+            <div className="grid md:grid-cols-3 gap-8">
+              {[
+                { name: 'Basic', price: '20', features: ['HD Export', '100 AI Tools', 'Basic Templates', '10GB Storage', 'Email Support'] },
+                { name: 'Pro', price: '30', features: ['4K Export', '300 AI Tools', 'Premium Templates', '100GB Storage', 'Priority Support', 'Commercial License'], popular: true },
+                { name: 'Studio', price: '50', features: ['8K Export', 'All 600 AI Tools', 'Unlimited Templates', '1TB Storage', '24/7 Live Support', 'Full Commercial Rights', 'Team Collaboration'] }
+              ].map((plan, i) => (
+                <div key={i} onClick={() => setSelectedPlan(plan.name.toLowerCase())} className={`bg-gradient-to-br from-purple-900/50 to-purple-800/30 border-4 rounded-3xl p-8 transition-all cursor-pointer ${selectedPlan === plan.name.toLowerCase() || plan.popular ? 'border-yellow-400 scale-105' : 'border-purple-900'} ${plan.popular ? 'relative' : ''}`}>
+                  {plan.popular && <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-purple-600 px-4 py-1 rounded-full text-sm font-black">POPULAR</div>}
+                  <h3 className="text-3xl font-black mb-4">{plan.name}</h3>
+                  <div className="text-5xl font-black mb-6">${plan.price}<span className="text-2xl">/mo</span></div>
+                  <ul className="space-y-3 text-left">
+                    {plan.features.map((feature, idx) => (
+                      <li key={idx} className="flex items-center gap-2"><Check size={20} className="text-purple-400" /> {feature}</li>
+                    ))}
+                  </ul>
+                  {plan.popular && selectedPlan === plan.name.toLowerCase() && (
+                    <div className="text-yellow-400 font-black text-center mt-6 flex items-center justify-center gap-2"><Check size={20} /> SELECTED</div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <div className="text-center mt-12">
+              <button className="bg-purple-600 hover:bg-purple-500 px-16 py-5 rounded-xl font-black text-2xl uppercase">Continue to Payment</button>
+              <p className="text-gray-400 mt-4">Secure payment powered by Stripe</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {page === 4 && (
+        <div className="min-h-screen bg-black p-8 pb-32">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex justify-between items-center mb-12">
+              <div>
+                <h1 className="text-6xl font-black uppercase text-purple-500">AI TOOL BOARD</h1>
+                {user && <p className="text-gray-400 mt-2">Welcome back, {user.email}!</p>}
+              </div>
+              <button className="bg-purple-600 hover:bg-purple-500 px-6 py-3 rounded-full font-bold flex items-center gap-2">
+                <Search size={20} /> Search
+              </button>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-8">
+              {[
+                { page: 5, title: "Writing Board", icon: "✍️", desc: "120 Story & Script Tools" },
+                { page: 6, title: "Voice Board", icon: "🎙️", desc: "120 Voice Generation Tools" },
+                { page: 7, title: "Image Board", icon: "🎨", desc: "120 Image Creation Tools" },
+                { page: 8, title: "Video Board", icon: "🎬", desc: "120 Video Production Tools" },
+                { page: 9, title: "Motion Board", icon: "🎭", desc: "120 Animation Tools" },
+                { page: 10, title: "Editor's Choice", icon: "⭐", desc: "Featured Movie Player" },
+              ].map((board) => (
+                <div key={board.page} onClick={() => setPage(board.page)} className="bg-gradient-to-br from-purple-900/50 to-purple-800/30 border-2 border-purple-600 rounded-2xl p-8 hover:border-purple-400 hover:scale-105 transition-all cursor-pointer text-center">
+                  <div className="text-6xl mb-4">{board.icon}</div>
+                  <h3 className="text-2xl font-black mb-2">{board.title}</h3>
+                  <p className="text-purple-300">{board.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {page === 5 && <ToolBoard title="WRITING" tools={TOOL_BOARDS.Writing} />}
+      {page === 6 && <ToolBoard title="VOICE" tools={TOOL_BOARDS.Voice} />}
+      {page === 7 && <ToolBoard title="IMAGE" tools={TOOL_BOARDS.Image} />}
+      {page === 8 && <ToolBoard title="VIDEO" tools={TOOL_BOARDS.Video} />}
+      {page === 9 && <ToolBoard title="MOTION" tools={TOOL_BOARDS.Motion} />}
+
+      {page === 10 && (
+        <div className="min-h-screen bg-black flex flex-col items-center justify-center p-8 pb-32">
+          <h1 className="text-6xl font-black uppercase text-purple-500 mb-12">EDITOR'S CHOICE</h1>
+          <div className="w-full max-w-6xl aspect-video bg-gray-900 rounded-2xl border-4 border-purple-600 flex items-center justify-center mb-8">
+            <div className="text-center">
+              <Play size={80} className="text-purple-500 mx-auto mb-4" />
+              <p className="text-2xl font-bold text-gray-400">No Movie Uploaded</p>
+              <p className="text-gray-500 mt-2">Upload a movie to watch it here!</p>
+            </div>
+          </div>
+          <button onClick={() => setPage(14)} className="bg-purple-600 hover:bg-purple-500 px-8 py-4 rounded-xl font-black text-xl flex items-center gap-2">
+            <Upload size={24} /> Go to Upload Page
           </button>
         </div>
-      </div>
-    </div>
+      )}
 
-    <div className="bg-gradient-to-br from-gray-900 to-black rounded-xl p-6 mt-6 border-2 border-gray-700">
-      <h3 className="text-xl font-bold mb-4 text-lime-400">Final Timeline</h3>
-      <div className="space-y-3">
-        <div className="bg-gray-800 rounded-lg p-3 flex items-center border border-gray-600">
-          <span className="text-sm mr-4 w-24 text-lime-400 font-bold">Main Video</span>
-          <div className="flex-1 bg-gradient-to-r from-lime-400 to-lime-500 h-10 rounded-lg shadow-lg"></div>
-        </div>
-        <div className="bg-gray-800 rounded-lg p-3 flex items-center border border-gray-600">
-          <span className="text-sm mr-4 w-24 text-blue-400 font-bold">Audio Mix</span>
-          <div className="flex-1 bg-gradient-to-r from-blue-400 to-blue-500 h-10 rounded-lg shadow-lg"></div>
-        </div>
-      </div>
-    </div>
+      {page === 11 && (
+        <div className="min-h-screen bg-black p-8 pb-32">
+          <div className="max-w-6xl mx-auto">
+            <h1 className="text-6xl font-black uppercase text-purple-500 mb-4">EDITOR SUITE</h1>
+            <p className="text-gray-400 mb-12">Professional-Grade Video Editing Platform</p>
 
-    <div className="flex gap-6 justify-center mt-6">
-      <button onClick={onBack} className="px-12 py-4 bg-gray-700 text-white font-bold rounded-lg hover:bg-gray-600 transition-all duration-300 flex items-center gap-2">
-        <ChevronLeft />Back
-      </button>
-      <button onClick={onNext} className="px-12 py-4 bg-lime-400 text-black font-bold rounded-lg hover:bg-lime-300 transition-all duration-300 flex items-center gap-2">
-        Next<ChevronRight />
-      </button>
-    </div>
-  </div>
-  );
-};
-
-const ViewerPage = ({ onBack, onNext }) => (
-  <div className="w-full h-full bg-black flex flex-col">
-    <div className="flex-1 flex items-center justify-center">
-      <div className="text-white text-center">
-        <h1 className="text-5xl font-bold mb-12 text-lime-400">Your Complete Movie</h1>
-        <div className="bg-gradient-to-br from-gray-900 to-black w-[1280px] h-[720px] rounded-2xl flex items-center justify-center border-4 border-lime-400 relative overflow-hidden shadow-2xl">
-          <div className="absolute inset-0 bg-gradient-to-br from-lime-400/10 to-transparent"></div>
-          <Play className="w-32 h-32 text-lime-400 z-10 cursor-pointer hover:scale-110 transition-transform" />
-        </div>
-      </div>
-    </div>
-    
-    <div className="flex gap-6 justify-center p-8">
-      <button onClick={onBack} className="px-12 py-4 bg-gray-700 text-white font-bold rounded-lg hover:bg-gray-600 transition-all duration-300 flex items-center gap-2">
-        <ChevronLeft />Back
-      </button>
-      <button onClick={onNext} className="px-12 py-4 bg-lime-400 text-black font-bold rounded-lg hover:bg-lime-300 transition-all duration-300 flex items-center gap-2">
-        Next<ChevronRight />
-      </button>
-    </div>
-  </div>
-);
-
-const LegalPage = ({ title, onBack, onNext }) => (
-  <div className="w-full h-full bg-black text-white p-8 overflow-y-auto">
-    <div className="max-w-4xl mx-auto">
-      <h1 className="text-5xl font-bold mb-12 text-lime-400 text-center">{title}</h1>
-      <div className="space-y-6 text-gray-300 leading-relaxed">
-        <p className="text-lg">This is a placeholder for the {title} content. You should replace this with your actual legal documentation.</p>
-        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
-        <p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
-      </div>
-
-      <div className="flex gap-6 justify-center mt-16">
-        <button onClick={onBack} className="px-12 py-4 bg-gray-700 text-white font-bold rounded-lg hover:bg-gray-600 transition-all duration-300 flex items-center gap-2">
-          <ChevronLeft />Back
-        </button>
-        <button onClick={onNext} className="px-12 py-4 bg-lime-400 text-black font-bold rounded-lg hover:bg-lime-300 transition-all duration-300 flex items-center gap-2">
-          Next<ChevronRight />
-        </button>
-      </div>
-
-      <footer className="text-center mt-16 text-sm text-gray-500">
-        MandaStrong Studio 2025 • Author of Doxy The School Bully • MandaStrong1.Etsy.com
-      </footer>
-    </div>
-  </div>
-);
-
-const CommunityPage = ({ onBack, onNext }) => (
-  <div className="w-full h-full bg-black text-white p-8 overflow-y-auto">
-    <div className="max-w-7xl mx-auto">
-      <h1 className="text-5xl font-bold mb-12 text-lime-400 text-center">Community Gallery</h1>
-      
-      <button className="w-full py-5 bg-lime-400 text-black font-bold rounded-lg mb-12 hover:bg-lime-300 transition-all duration-300 flex items-center justify-center gap-2 text-xl">
-        <Upload />Upload Your Movie
-      </button>
-
-      <div className="grid grid-cols-3 gap-8 mb-12">
-        {[1, 2, 3, 4, 5, 6].map((i) => (
-          <div key={i} className="bg-gradient-to-br from-gray-900 to-black rounded-xl overflow-hidden border-2 border-gray-700 hover:border-lime-400 transition-all duration-300 hover:scale-105">
-            <div className="bg-gray-800 h-56 flex items-center justify-center border-b-2 border-gray-700">
-              <Play className="w-16 h-16 text-lime-400 cursor-pointer hover:scale-110 transition-transform" />
+            <div className="grid grid-cols-2 gap-6 mb-12">
+              {[
+                { icon: Film, title: "Video Editor", desc: "Multi-track timeline with professional tools" },
+                { icon: Music, title: "Audio Mixer", desc: "Professional audio mixing suite" },
+                { icon: Palette, title: "Color Grading", desc: "Advanced color correction workspace" },
+                { icon: Layers, title: "Effects Library", desc: "Thousands of transitions and effects" },
+                { icon: Zap, title: "Precision Tools", desc: "Frame-accurate cutting" },
+                { icon: Sparkles, title: "AI Enhancement", desc: "AI-powered upscaling" },
+              ].map((item, i) => (
+                <div key={i} className="bg-gray-900/50 border-2 border-purple-900/30 rounded-2xl p-6 hover:border-purple-600 transition-all cursor-pointer">
+                  <item.icon size={40} className="text-purple-500 mb-4" />
+                  <h3 className="text-2xl font-black mb-2">{item.title}</h3>
+                  <p className="text-gray-400">{item.desc}</p>
+                </div>
+              ))}
             </div>
-            <div className="p-6">
-              <h3 className="font-bold mb-4 text-xl">User Movie {i}</h3>
-              <div className="flex gap-6 text-base">
-                <button className="flex items-center gap-2 text-lime-400 hover:text-lime-300 transition-all">
-                  👍 <span>Like</span>
+
+            <div className="bg-gray-900/50 border-2 border-purple-900/30 rounded-2xl p-8">
+              <div className="flex items-center gap-4 mb-6">
+                <Clock size={32} className="text-purple-500" />
+                <h3 className="text-3xl font-black">Set Movie Duration</h3>
+              </div>
+              <div className="text-center mb-6">
+                <div className="text-7xl font-black text-purple-500 mb-2">{duration}</div>
+                <div className="text-xl font-black text-purple-400">MINUTES</div>
+              </div>
+              <input type="range" min="0" max="240" value={duration} onChange={(e) => setDuration(parseInt(e.target.value))} className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-purple-600" />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {page === 12 && (
+        <div className="min-h-screen bg-black p-8 pb-32">
+          <div className="max-w-6xl mx-auto">
+            <h1 className="text-6xl font-black uppercase text-purple-500 mb-4">MY PROJECTS</h1>
+            <p className="text-gray-400 mb-12">Manage all your movie projects in one place</p>
+
+            {user ? (
+              <>
+                <div className="bg-gradient-to-br from-purple-900/50 to-purple-800/30 border-2 border-purple-600 rounded-2xl p-8 mb-8">
+                  <h2 className="text-3xl font-black mb-6">Create New Project</h2>
+                  <div className="flex gap-4">
+                    <input
+                      type="text"
+                      placeholder="Project Title..."
+                      value={projectTitle}
+                      onChange={(e) => setProjectTitle(e.target.value)}
+                      className="flex-1 bg-transparent border-2 border-purple-600 rounded-xl px-4 py-3 text-white placeholder-gray-500"
+                    />
+                    <button onClick={createProject} className="bg-purple-600 hover:bg-purple-500 px-8 py-3 rounded-xl font-black flex items-center gap-2">
+                      <Plus size={20} /> Create
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  {projects.length === 0 ? (
+                    <div className="col-span-2 text-center py-12 text-gray-400">
+                      <Folder size={64} className="mx-auto mb-4 opacity-50" />
+                      <p className="text-xl">No projects yet. Create your first one above!</p>
+                    </div>
+                  ) : (
+                    projects.map((project) => (
+                      <div key={project.id} className="bg-gray-900/50 border-2 border-purple-900/30 rounded-2xl p-6 hover:border-purple-600 transition-all">
+                        <div className="flex justify-between items-start mb-4">
+                          <div>
+                            <h3 className="text-2xl font-black mb-2">{project.title}</h3>
+                            <p className="text-gray-400 text-sm">Duration: {project.duration} minutes</p>
+                            <p className="text-gray-400 text-sm">Phase: {project.current_phase} of 3</p>
+                          </div>
+                          <div className="flex gap-2">
+                            <button className="p-2 bg-purple-600 hover:bg-purple-500 rounded-lg">
+                              <Edit size={16} />
+                            </button>
+                            <button className="p-2 bg-red-600 hover:bg-red-500 rounded-lg">
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </div>
+                        <div className="w-full bg-gray-800 rounded-full h-2 mb-4">
+                          <div className="bg-purple-600 h-2 rounded-full" style={{width: `${(project.current_phase / 3) * 100}%`}}></div>
+                        </div>
+                        <button onClick={() => {setCurrentProject(project); setPage(15);}} className="w-full bg-purple-600 hover:bg-purple-500 py-2 rounded-lg font-bold">
+                          Open Project
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-12">
+                <Lock size={64} className="mx-auto mb-4 text-purple-500" />
+                <p className="text-xl text-gray-400 mb-4">Please login to access your projects</p>
+                <button onClick={() => setPage(3)} className="bg-purple-600 hover:bg-purple-500 px-8 py-3 rounded-xl font-black">
+                  Go to Login
                 </button>
-                <button className="flex items-center gap-2 text-red-400 hover:text-red-300 transition-all">
-                  ❤️ <span>Love</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {page === 13 && (
+        <div className="min-h-screen bg-black p-8 pb-32 overflow-y-auto">
+          <div className="max-w-6xl mx-auto">
+            <h1 className="text-6xl font-black uppercase text-purple-500 mb-12">ENHANCEMENT STUDIO</h1>
+
+            <div className="bg-gray-900/50 border-2 border-purple-600 rounded-2xl p-8 mb-8">
+              <div className="flex items-center gap-4 mb-6">
+                <Clock size={32} className="text-purple-500" />
+                <h3 className="text-3xl font-black">Master Duration Control</h3>
+              </div>
+              <div className="text-center mb-6">
+                <div className="text-7xl font-black text-purple-500 mb-2">{duration}</div>
+                <div className="text-xl font-black text-purple-400">MINUTES</div>
+              </div>
+              <input type="range" min="0" max="180" value={duration} onChange={(e) => setDuration(parseInt(e.target.value))} className="w-full h-3 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-purple-600" />
+              <div className="flex justify-between text-sm text-gray-400 mt-2">
+                <span>0 minutes</span>
+                <span>180 minutes (3 hours)</span>
+              </div>
+            </div>
+
+            <h2 className="text-3xl font-black text-purple-400 mb-6">30 Professional Enhancement Tools</h2>
+            <div className="grid grid-cols-3 gap-4">
+              {ENHANCEMENT_TOOLS.map((tool, i) => (
+                <div key={i} className="bg-gray-900/50 border-2 border-purple-900/30 rounded-xl p-4 flex items-center gap-3 hover:border-purple-600 hover:bg-gray-900 transition-all cursor-pointer">
+                  <Zap size={20} className="text-purple-500 flex-shrink-0" />
+                  <span className="font-bold text-sm">{tool}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {page === 14 && (
+        <div className="min-h-screen bg-black p-8 pb-32">
+          <div className="max-w-6xl mx-auto">
+            <h1 className="text-6xl font-black uppercase text-purple-500 mb-4">UPLOAD ASSETS</h1>
+            <p className="text-gray-400 mb-12">Upload videos, images, audio, and other media files</p>
+
+            <div className="grid md:grid-cols-2 gap-8 mb-12">
+              <div className="bg-gradient-to-br from-purple-900/50 to-purple-800/30 border-2 border-purple-600 rounded-2xl p-8">
+                <div className="border-4 border-dashed border-purple-600 rounded-2xl p-12 text-center hover:border-purple-400 transition-all cursor-pointer">
+                  <Upload size={64} className="mx-auto mb-4 text-purple-500" />
+                  <h3 className="text-2xl font-black mb-2">Upload Video Files</h3>
+                  <p className="text-gray-400 mb-4">MP4, MOV, AVI up to 5GB</p>
+                  <button className="bg-purple-600 hover:bg-purple-500 px-6 py-3 rounded-xl font-bold">
+                    Choose Files
+                  </button>
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-br from-purple-900/50 to-purple-800/30 border-2 border-purple-600 rounded-2xl p-8">
+                <div className="border-4 border-dashed border-purple-600 rounded-2xl p-12 text-center hover:border-purple-400 transition-all cursor-pointer">
+                  <ImageIcon size={64} className="mx-auto mb-4 text-purple-500" />
+                  <h3 className="text-2xl font-black mb-2">Upload Images</h3>
+                  <p className="text-gray-400 mb-4">JPG, PNG, GIF up to 50MB</p>
+                  <button className="bg-purple-600 hover:bg-purple-500 px-6 py-3 rounded-xl font-bold">
+                    Choose Files
+                  </button>
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-br from-purple-900/50 to-purple-800/30 border-2 border-purple-600 rounded-2xl p-8">
+                <div className="border-4 border-dashed border-purple-600 rounded-2xl p-12 text-center hover:border-purple-400 transition-all cursor-pointer">
+                  <Music size={64} className="mx-auto mb-4 text-purple-500" />
+                  <h3 className="text-2xl font-black mb-2">Upload Audio</h3>
+                  <p className="text-gray-400 mb-4">MP3, WAV, M4A up to 200MB</p>
+                  <button className="bg-purple-600 hover:bg-purple-500 px-6 py-3 rounded-xl font-bold">
+                    Choose Files
+                  </button>
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-br from-purple-900/50 to-purple-800/30 border-2 border-purple-600 rounded-2xl p-8">
+                <div className="border-4 border-dashed border-purple-600 rounded-2xl p-12 text-center hover:border-purple-400 transition-all cursor-pointer">
+                  <FileText size={64} className="mx-auto mb-4 text-purple-500" />
+                  <h3 className="text-2xl font-black mb-2">Upload Scripts</h3>
+                  <p className="text-gray-400 mb-4">TXT, PDF, DOCX up to 10MB</p>
+                  <button className="bg-purple-600 hover:bg-purple-500 px-6 py-3 rounded-xl font-bold">
+                    Choose Files
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gray-900/50 border-2 border-purple-900/30 rounded-2xl p-8">
+              <h2 className="text-3xl font-black mb-6">Uploaded Files</h2>
+              {uploadedFiles.length === 0 ? (
+                <p className="text-center text-gray-400 py-8">No files uploaded yet</p>
+              ) : (
+                <div className="space-y-3">
+                  {uploadedFiles.map((file, i) => (
+                    <div key={i} className="flex items-center justify-between bg-gray-800 rounded-xl p-4">
+                      <div className="flex items-center gap-3">
+                        <FileVideo size={24} className="text-purple-500" />
+                        <span className="font-bold">{file.name}</span>
+                      </div>
+                      <button className="text-red-400 hover:text-red-300">
+                        <Trash2 size={20} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {page === 15 && (
+        <div className="min-h-screen bg-black p-8 pb-32">
+          <div className="max-w-7xl mx-auto">
+            <h1 className="text-6xl font-black uppercase text-purple-500 mb-4">TIMELINE BUILDER</h1>
+            <p className="text-gray-400 mb-8">Drag and drop to build your movie timeline</p>
+
+            {currentProject && (
+              <div className="bg-gradient-to-br from-purple-900/50 to-purple-800/30 border-2 border-purple-600 rounded-2xl p-6 mb-8">
+                <h2 className="text-2xl font-black mb-2">Current Project: {currentProject.title}</h2>
+                <p className="text-gray-400">Duration: {currentProject.duration} minutes</p>
+              </div>
+            )}
+
+            <div className="bg-gray-900/50 border-2 border-purple-900/30 rounded-2xl p-8 mb-8">
+              <h3 className="text-2xl font-black mb-6">Timeline Preview</h3>
+              <div className="bg-gray-800 rounded-xl p-6 min-h-[200px] border-2 border-dashed border-gray-700">
+                <p className="text-center text-gray-500 py-12">Drop clips here to build your timeline</p>
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-4 gap-4">
+              <div className="bg-gray-900/50 border-2 border-purple-900/30 rounded-xl p-4">
+                <h4 className="font-black mb-3 flex items-center gap-2">
+                  <Video size={20} className="text-purple-500" /> Video Clips
+                </h4>
+                <div className="space-y-2">
+                  <div className="bg-gray-800 rounded-lg p-3 cursor-pointer hover:bg-gray-700 transition">
+                    <p className="text-sm font-bold">Intro Scene</p>
+                    <p className="text-xs text-gray-400">0:30</p>
+                  </div>
+                  <div className="bg-gray-800 rounded-lg p-3 cursor-pointer hover:bg-gray-700 transition">
+                    <p className="text-sm font-bold">Main Scene</p>
+                    <p className="text-xs text-gray-400">5:00</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gray-900/50 border-2 border-purple-900/30 rounded-xl p-4">
+                <h4 className="font-black mb-3 flex items-center gap-2">
+                  <Music size={20} className="text-purple-500" /> Audio Tracks
+                </h4>
+                <div className="space-y-2">
+                  <div className="bg-gray-800 rounded-lg p-3 cursor-pointer hover:bg-gray-700 transition">
+                    <p className="text-sm font-bold">Background Music</p>
+                    <p className="text-xs text-gray-400">3:45</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gray-900/50 border-2 border-purple-900/30 rounded-xl p-4">
+                <h4 className="font-black mb-3 flex items-center gap-2">
+                  <ImageIcon size={20} className="text-purple-500" /> Images
+                </h4>
+                <div className="space-y-2">
+                  <div className="bg-gray-800 rounded-lg p-3 cursor-pointer hover:bg-gray-700 transition">
+                    <p className="text-sm font-bold">Title Card</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gray-900/50 border-2 border-purple-900/30 rounded-xl p-4">
+                <h4 className="font-black mb-3 flex items-center gap-2">
+                  <Sparkles size={20} className="text-purple-500" /> Effects
+                </h4>
+                <div className="space-y-2">
+                  <div className="bg-gray-800 rounded-lg p-3 cursor-pointer hover:bg-gray-700 transition">
+                    <p className="text-sm font-bold">Fade In</p>
+                  </div>
+                  <div className="bg-gray-800 rounded-lg p-3 cursor-pointer hover:bg-gray-700 transition">
+                    <p className="text-sm font-bold">Fade Out</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-8 text-center">
+              <button className="bg-purple-600 hover:bg-purple-500 px-12 py-4 rounded-xl font-black text-xl flex items-center gap-2 mx-auto">
+                <Save size={24} /> Save Timeline
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {page === 16 && (
+        <div className="min-h-screen bg-black p-8 pb-32">
+          <h1 className="text-5xl font-black uppercase mb-12">EXPORT CENTER</h1>
+
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-purple-900/20 border-2 border-purple-600/30 rounded-2xl p-8 mb-8">
+              <h2 className="text-3xl font-black mb-6">Export Settings</h2>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-bold mb-2">Quality</label>
+                  <select className="w-full bg-gray-800 border-2 border-purple-600 rounded-xl px-4 py-3">
+                    <option>4K (3840x2160)</option>
+                    <option>1080p (1920x1080)</option>
+                    <option>720p (1280x720)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-bold mb-2">Format</label>
+                  <select className="w-full bg-gray-800 border-2 border-purple-600 rounded-xl px-4 py-3">
+                    <option>MP4</option>
+                    <option>MOV</option>
+                    <option>AVI</option>
+                  </select>
+                </div>
+                <button className="w-full bg-purple-600 hover:bg-purple-500 py-4 rounded-xl font-black text-xl flex items-center justify-center gap-2">
+                  <Download size={24} /> Export Movie
                 </button>
               </div>
             </div>
+
+            <div className="bg-purple-900/20 border-2 border-purple-600/30 rounded-2xl p-8 mb-8 text-center">
+              <h2 className="text-3xl font-black mb-6">Share To Social Media</h2>
+              <div className="grid grid-cols-6 gap-4">
+                {[
+                  { name: 'YouTube', icon: Youtube },
+                  { name: 'X', icon: Twitter },
+                  { name: 'Instagram', icon: Instagram },
+                  { name: 'TikTok', icon: Music },
+                  { name: 'Vimeo', icon: Video },
+                  { name: 'Facebook', icon: Facebook }
+                ].map((platform, i) => (
+                  <button key={i} className="bg-purple-600 hover:bg-purple-500 p-6 rounded-xl flex flex-col items-center gap-2 transition-all hover:scale-105">
+                    <platform.icon size={32} />
+                    <span className="text-xs font-bold">{platform.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
 
-      <div className="flex gap-6 justify-center">
-        <button onClick={onBack} className="px-12 py-4 bg-gray-700 text-white font-bold rounded-lg hover:bg-gray-600 transition-all duration-300 flex items-center gap-2">
-          <ChevronLeft />Back
-        </button>
-        <button onClick={onNext} className="px-12 py-4 bg-lime-400 text-black font-bold rounded-lg hover:bg-lime-300 transition-all duration-300 flex items-center gap-2">
-          Next<ChevronRight />
-        </button>
-      </div>
+      {page === 17 && (
+        <div className="min-h-screen bg-black p-8 pb-32">
+          <h1 className="text-5xl font-black uppercase mb-12 text-center">TUTORIALS & LEARNING CENTER</h1>
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-12">
+              <BookOpen size={80} className="mx-auto mb-4 text-purple-400" />
+              <h2 className="text-3xl font-black">Master MandaStrong Studio</h2>
+              <p className="text-gray-400 mt-4">Learn everything you need to create amazing movies</p>
+            </div>
 
-      <footer className="text-center mt-16 text-sm text-gray-500">
-        MandaStrong Studio 2025 • Author of Doxy The School Bully • MandaStrong1.Etsy.com
-      </footer>
+            <div className="grid md:grid-cols-3 gap-8">
+              {[
+                { title: "Getting Started", icon: Play, lessons: 12 },
+                { title: "AI Tools Mastery", icon: Sparkles, lessons: 24 },
+                { title: "Video Editing Basics", icon: Film, lessons: 18 },
+                { title: "Audio Production", icon: Music, lessons: 15 },
+                { title: "Color Grading", icon: Palette, lessons: 10 },
+                { title: "Export & Sharing", icon: Share2, lessons: 8 }
+              ].map((course, i) => (
+                <div key={i} className="bg-gradient-to-br from-purple-900/50 to-purple-800/30 border-2 border-purple-600 rounded-2xl p-8 hover:scale-105 transition-all cursor-pointer">
+                  <course.icon size={48} className="text-purple-400 mb-4" />
+                  <h3 className="text-2xl font-black mb-2">{course.title}</h3>
+                  <p className="text-gray-400">{course.lessons} Lessons</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {page === 18 && (
+        <div className="min-h-screen bg-black p-8 pb-32">
+          <h1 className="text-5xl font-black uppercase mb-12 text-center">TERMS OF SERVICE & DISCLAIMER</h1>
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-purple-900/30 border-2 border-purple-600 rounded-2xl p-8 mb-8 text-center">
+              <Shield size={64} className="mx-auto mb-4 text-purple-400" />
+              <h2 className="text-4xl font-black mb-4">Legal Agreement</h2>
+              <p className="text-gray-300 leading-relaxed">
+                By using MandaStrong Studio, you agree to our terms of service.
+                All content created using this platform is subject to copyright laws.
+                Please use responsibly and respect intellectual property rights.
+              </p>
+            </div>
+
+            <div className="bg-gray-900/50 border-2 border-purple-900/30 rounded-2xl p-8">
+              <h3 className="text-2xl font-black mb-4">Key Points</h3>
+              <ul className="space-y-3 text-gray-300">
+                <li className="flex items-start gap-3">
+                  <Check size={20} className="text-purple-400 mt-1 flex-shrink-0" />
+                  <span>You retain ownership of your original content</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <Check size={20} className="text-purple-400 mt-1 flex-shrink-0" />
+                  <span>Commercial use requires appropriate license</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <Check size={20} className="text-purple-400 mt-1 flex-shrink-0" />
+                  <span>AI-generated content follows fair use guidelines</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <Check size={20} className="text-purple-400 mt-1 flex-shrink-0" />
+                  <span>Storage limits apply based on your plan</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {page === 19 && (
+        <div className="min-h-screen bg-black p-8 pb-32">
+          <h1 className="text-5xl font-black uppercase mb-8 flex items-center gap-4 justify-center">
+            <MessageCircle size={48} className="text-purple-500" />
+            AGENT GROK - 24/7 HELP DESK
+          </h1>
+
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-gray-900/50 border-2 border-purple-600 rounded-2xl p-6 mb-6 h-[500px] overflow-y-auto">
+              <div className="space-y-4">
+                {chatMessages.map((msg, i) => (
+                  <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[70%] rounded-2xl p-4 ${msg.role === 'user' ? 'bg-purple-600' : 'bg-gray-800 border-2 border-purple-900/30'}`}>
+                      <p>{msg.message}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <input
+                type="text"
+                placeholder="Type your message..."
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleChatSend()}
+                className="flex-1 bg-gray-900 border-2 border-purple-600 rounded-xl px-6 py-4 text-white placeholder-gray-500"
+              />
+              <button onClick={handleChatSend} className="bg-purple-600 hover:bg-purple-500 px-8 py-4 rounded-xl font-black flex items-center gap-2">
+                <Send size={20} /> Send
+              </button>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-4 mt-8">
+              {[
+                "How do I start a new project?",
+                "What AI tools are available?",
+                "How to export my video?"
+              ].map((question, i) => (
+                <button
+                  key={i}
+                  onClick={() => {setChatInput(question); handleChatSend();}}
+                  className="bg-gray-800 hover:bg-gray-700 border-2 border-purple-900/30 rounded-xl p-4 text-left text-sm"
+                >
+                  {question}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {page === 20 && (
+        <div className="min-h-screen bg-black p-8 pb-32">
+          <h1 className="text-5xl font-black uppercase mb-8 text-center">COMMUNITY HUB</h1>
+
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-12">
+              <Users size={80} className="mx-auto mb-4 text-purple-400" />
+              <h2 className="text-3xl font-black mb-2">Join Our Creator Community</h2>
+              <p className="text-gray-400">Connect with fellow filmmakers and share your work</p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-8">
+              <div className="bg-gradient-to-br from-purple-900/50 to-purple-800/30 border-2 border-purple-600 rounded-2xl p-8">
+                <h3 className="text-3xl font-black mb-6">Featured Projects</h3>
+                <div className="space-y-4">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="bg-gray-900/50 rounded-xl p-4 border-2 border-purple-900/30">
+                      <h4 className="font-black mb-2">Amazing Short Film #{i}</h4>
+                      <p className="text-sm text-gray-400">by Creator {i}</p>
+                      <div className="flex items-center gap-4 mt-3 text-sm">
+                        <span className="flex items-center gap-1">
+                          <Heart size={16} className="text-red-400" /> 234
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Eye size={16} className="text-blue-400" /> 1.2k
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-br from-purple-900/50 to-purple-800/30 border-2 border-purple-600 rounded-2xl p-8">
+                <h3 className="text-3xl font-black mb-6">Discussion Forums</h3>
+                <div className="space-y-3">
+                  {[
+                    "Tips & Tricks",
+                    "Show Your Work",
+                    "Technical Help",
+                    "Feature Requests",
+                    "General Discussion"
+                  ].map((forum, i) => (
+                    <button key={i} className="w-full bg-gray-900/50 hover:bg-gray-800 border-2 border-purple-900/30 rounded-xl p-4 text-left font-bold transition-all">
+                      {forum}
+                      <span className="float-right text-gray-400 text-sm">{Math.floor(Math.random() * 500)} posts</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {page === 21 && (
+        <div className="min-h-screen bg-gradient-to-br from-purple-900 via-black to-purple-900 p-8 pb-32 overflow-y-auto">
+          <div className="max-w-4xl mx-auto">
+            <h1 className="text-7xl font-black uppercase text-purple-400 text-center mb-12">THAT'S ALL FOLKS!</h1>
+
+            <div className="bg-purple-900/30 border-2 border-purple-600/30 rounded-3xl p-10 mb-8">
+              <h2 className="text-4xl font-black mb-6">A Special Thank You</h2>
+              <p className="text-lg leading-relaxed mb-4">To all current and future creators, dreamers, and storytellers...</p>
+              <p className="text-gray-300 leading-relaxed">Your creativity and passion inspire positive change in the world.</p>
+            </div>
+
+            <div className="bg-purple-900/30 border-2 border-purple-600/30 rounded-3xl p-10">
+              <h2 className="text-4xl font-black mb-6">About Our Mission</h2>
+              <p className="text-gray-300 mb-4">MandaStrong Studio is more than a filmmaking platform.</p>
+              <p className="text-gray-300 mb-6">Visit our fundraiser at <a href="https://MandaStrong1.Etsy.com" className="text-purple-400 underline font-bold">MandaStrong1.Etsy.com</a></p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {![1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21].includes(page) && (
+        <div className="min-h-screen bg-black flex items-center justify-center text-white">
+          <div className="text-center">
+            <h1 className="text-8xl font-black text-purple-500 mb-4">PAGE {page}</h1>
+            <p className="text-gray-400">Content coming soon...</p>
+          </div>
+        </div>
+      )}
     </div>
-  </div>
-);
-
-const ContactPage = ({ onBack, onNext }) => (
-  <div className="w-full h-full bg-black text-white p-8 overflow-y-auto">
-    <div className="max-w-3xl mx-auto">
-      <h1 className="text-5xl font-bold mb-12 text-lime-400 text-center">Contact Support</h1>
-      
-      <div className="bg-gradient-to-br from-gray-900 to-black p-10 rounded-2xl mb-12 border-2 border-lime-400 shadow-xl">
-        <h2 className="text-3xl font-bold mb-6 text-lime-400">24/7 AI Agent Support</h2>
-        <p className="mb-6 text-gray-300 text-lg leading-relaxed">
-          Get instant answers to your questions with our intelligent AI helpdesk. 
-          Our agents are available around the clock to assist you with any queries or technical issues.
-        </p>
-        <button className="w-full py-5 bg-lime-400 text-black font-bold rounded-lg hover:bg-lime-300 transition-all duration-300 text-xl">
-          Chat with Agent Now
-        </button>
-      </div>
-
-      <div className="bg-gradient-to-br from-gray-900 to-black p-10 rounded-2xl border-2 border-gray-700">
-        <h3 className="text-2xl font-bold mb-6 text-white">Send a Message</h3>
-        <input type="text" placeholder="Your Name" className="w-full p-4 mb-6 bg-gray-800 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-lime-400" />
-        <input type="email" placeholder="Your Email" className="w-full p-4 mb-6 bg-gray-800 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-lime-400" />
-        <textarea placeholder="Your Message" rows="6" className="w-full p-4 mb-6 bg-gray-800 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-lime-400"></textarea>
-        <button className="w-full py-4 bg-lime-400 text-black font-bold rounded-lg hover:bg-lime-300 transition-all duration-300">
-          Send Message
-        </button>
-      </div>
-
-      <div className="flex gap-6 justify-center mt-12">
-        <button onClick={onBack} className="px-12 py-4 bg-gray-700 text-white font-bold rounded-lg hover:bg-gray-600 transition-all duration-300 flex items-center gap-2">
-          <ChevronLeft />Back
-        </button>
-        <button onClick={onNext} className="px-12 py-4 bg-lime-400 text-black font-bold rounded-lg hover:bg-lime-300 transition-all duration-300 flex items-center gap-2">
-          Next<ChevronRight />
-        </button>
-      </div>
-
-      <footer className="text-center mt-16 text-sm text-gray-500">
-        MandaStrong Studio 2025 • Author of Doxy The School Bully • MandaStrong1.Etsy.com
-      </footer>
-    </div>
-  </div>
-);
-
-const ThankYouPage = ({ onBack }) => (
-  <div className="w-full h-full bg-black text-white flex items-center justify-center">
-    <div className="text-center max-w-3xl p-12">
-      <h1 className="text-6xl font-bold mb-12 text-lime-400">Thank You!</h1>
-      <p className="text-2xl mb-8 text-gray-300">
-        Dear Creator,
-      </p>
-      <p className="text-xl mb-8 text-gray-300 leading-relaxed">
-        Thank you for choosing MandaStrong Studio to bring your creative vision to life. 
-        Your stories matter, and I am honored to be part of your filmmaking journey.
-      </p>
-      <p className="text-xl mb-8 text-gray-300 leading-relaxed">
-        Whether you are creating family memories or turning dreams into reality, 
-        this platform was built with love to empower your creativity.
-      </p>
-      <p className="text-xl mb-12 text-gray-300 leading-relaxed">
-        Keep creating, keep dreaming, and most importantly keep telling your stories.
-      </p>
-      <p className="text-2xl font-bold text-lime-400 mb-4">
-        - Amanda Strong
-      </p>
-      
-      <div className="text-5xl font-black text-lime-400 mb-16 animate-pulse">
-        That's All Folks!
-      </div>
-
-      <div className="flex justify-center">
-        <button onClick={onBack} className="px-12 py-4 bg-gray-700 text-white font-bold rounded-lg hover:bg-gray-600 transition-all duration-300 flex items-center gap-2">
-          <ChevronLeft />Back
-        </button>
-      </div>
-
-      <footer className="mt-16 text-sm text-gray-500">
-        MandaStrong Studio 2025 • Author of Doxy The School Bully • MandaStrong1.Etsy.com
-      </footer>
-    </div>
-  </div>
-);
-
-export default App;
+  );
+}
