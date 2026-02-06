@@ -1,23 +1,5 @@
 
-import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Menu, Sparkles, ChevronRight, ChevronLeft, 
-  CheckCircle, Play, Upload, MessageCircle, 
-  Send, Video as VideoIcon, 
-  Zap, Camera, Shield, Heart, Share2, 
-  ImageIcon, Download, Sliders, Eye,
-  FileVideo, Lock, UserPlus, CreditCard, Mail, Key, User, Wand2,
-  Monitor, Volume2, Layers, Scissors, Palette, BookOpen, Search, Activity,
-  Settings, Database, TrendingUp, Clock, X, Wind, Sun, Target, Maximize
-} from 'lucide-react';
-
-// --- PRODUCTION AI TOOLSET GENERATOR (120 PER BOARD) ---
-const generateTools = (category) => {
-  const baseTools = {
-    Writing: ["Neural Script Architect", "DeepPlot Narrative AI", "Dialogue Synthesis Engine", "Character Core Logic", "Three-Act Quantum Solver", "Arc Flow Optimizer", "DeepLore Neural Link", "Subtext Logic Synth", "Scene-Beat Optimizer", "Climatic Logic Pro", "Backstory Neural Weaver", "Protagonist Core Lab"],
-    Voice: ["Neural Vocal Clone Pro", "Atmospheric Timbre Synth", "Emotion-Depth Modulator", "Sonic Dialect Weaver", "DeepBreath Neural AI", "Vocal Clarity Engine", "Resonance Mapping Pro", "Linguistic Flow Lab", "Neural Accent Synthesis", "Studio Harmony Logic", "Whisper-Logic Pro", "Vocal Identity Synth"],
-    Image: ["Neural Asset Architect", "Quantum Texture Mapper", "VFX Plate Synthesis", "Matte Painting Logic", "Atmospheric Light Engine", "Skin-Shader Neural Lab", "Depth-Field Logic Pro", "Style Transfer Matrix", "Background Weaver AI", "Cinematic Grain Synth", "Reflection Logic Engine", "Particle Physics Synth"],
-    Video: ["Temporal Motion Synth", "Cinematic Camera Logic", "Neural Avatar Rigger", "Dynamic Pan AI", "Crane Shot Simulator", "Dolly Zoom Neural Pro", "Tracking Shot Logic", "Frame Interpolation Pro", "Depth Motion Synth", "Action-Sequence Weaver", "Perspective Shift AI", "Dynamic Focus Lab"],
+ation Pro", "Depth Motion Synth", "Action-Sequence Weaver", "Perspective Shift AI", "Dynamic Focus Lab"],
     Motion: ["Skeleton Tracker Pro", "Neural Mocap Logic", "Fluid Physics Engine", "Cloth Dynamics AI", "Facial Logic Synthesis", "Joint Precision Engine", "Gravity Simulator Lab", "Collision Matrix Pro", "Soft-Body Neural Pro", "Muscle-Fiber Logic", "Impact Logic Mapper", "Auto-Rigger Neural V2"]
   };
   const list = [];
